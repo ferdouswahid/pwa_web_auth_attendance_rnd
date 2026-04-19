@@ -14,6 +14,10 @@ export class ZoneService {
     await this.db.zones.add(zone);
   }
 
+  async updateZone(id: number, zone: Omit<Zone, 'id'>): Promise<void> {
+    await this.db.zones.update(id, zone);
+  }
+
   async deleteZone(id: number): Promise<void> {
     await this.db.zones.delete(id);
   }

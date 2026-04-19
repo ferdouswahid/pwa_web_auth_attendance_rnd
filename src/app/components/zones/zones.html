@@ -44,6 +44,9 @@
       <!-- Add zone form -->
       @if (showZoneForm()) {
         <div class="px-4 py-4 bg-indigo-50 border-b border-indigo-100">
+          <p class="text-xs font-bold text-indigo-700 uppercase tracking-wide mb-3">
+            {{ editingZone() ? 'Edit Zone' : 'New Zone' }}
+          </p>
           @if (zoneError()) {
             <div class="bg-red-50 border border-red-200 text-red-700 text-xs px-3 py-2 rounded-lg mb-3 flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -90,7 +93,7 @@
                 </svg>
                 Saving…
               } @else {
-                Save Zone
+                {{ editingZone() ? 'Update Zone' : 'Save Zone' }}
               }
             </button>
           </form>
@@ -124,6 +127,13 @@
                   {{ zone.lat | number:'1.4-6' }}, {{ zone.lng | number:'1.4-6' }} · {{ zone.radius }}m radius
                 </p>
               </div>
+              <button (click)="openEditForm(zone)"
+                class="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
               <button (click)="deleteZone(zone.id!)"
                 class="w-8 h-8 flex items-center justify-center rounded-xl text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

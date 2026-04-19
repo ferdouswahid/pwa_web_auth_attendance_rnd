@@ -17,6 +17,7 @@ export class ZonesComponent implements OnInit {
 
   zones = signal<Zone[]>([]);
   showZoneForm = signal(false);
+  editingZone = signal<Zone | null>(null);
   zoneLoading = signal(false);
   zoneError = signal<string | null>(null);
 
@@ -37,8 +38,16 @@ export class ZonesComponent implements OnInit {
 
   toggleZoneForm(): void {
     this.showZoneForm.update(v => !v);
+    this.editingZone.set(null);
     this.zoneError.set(null);
     this.zoneForm.reset({ radius: 200 });
+  }
+
+  openEditForm(zone: Zone): void {
+    this.editingZone.set(zone);
+    this.zoneForm.setValue({ name: zone.name, lat: zone.lat, lng: zone.lng, radius: zone.radius });
+    this.zoneError.set(null);
+    this.showZoneForm.set(true);
   }
 
   async submitZone(): Promise<void> {
@@ -47,8 +56,14 @@ export class ZonesComponent implements OnInit {
     this.zoneLoading.set(true);
     try {
       const { name, lat, lng, radius } = this.zoneForm.value;
-      await this.zoneService.addZone({ name: name!, lat: lat!, lng: lng!, radius: radius! });
+      const editing = this.editingZone();
+      if (editing) {
+        await this.zoneService.updateZone(editing.id!, { name: name!, lat: lat!, lng: lng!, radius: radius! });
+      } else {
+        await this.zoneService.addZone({ name: name!, lat: lat!, lng: lng!, radius: radius! });
+      }
       this.zoneForm.reset({ radius: 200 });
+      this.editingZone.set(null);
       this.showZoneForm.set(false);
       await this.refreshZones();
     } catch (err) {

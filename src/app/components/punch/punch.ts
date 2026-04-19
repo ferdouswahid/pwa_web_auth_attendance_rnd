@@ -1,4 +1,4 @@
-import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { BiometricService } from '../../services/biometric.service';
@@ -29,6 +29,21 @@ export class PunchComponent implements OnInit, OnDestroy {
   activeZone = signal<Zone | null>(null);
   nearestZone = signal<{ zone: Zone; distance: number } | null>(null);
 
+  zoneDistances = computed(() => {
+    const c = this.coords();
+    return this.zones()
+      .map(z => ({
+        zone: z,
+        distance: c
+          ? this.zoneService.haversineDistance(c.latitude, c.longitude, z.lat, z.lng)
+          : null,
+        isActive: c
+          ? this.zoneService.haversineDistance(c.latitude, c.longitude, z.lat, z.lng) <= z.radius
+          : false,
+      }))
+      .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+  });
+
   locationError = signal<string | null>(null);
   actionMessage = signal<string | null>(null);
   actionError = signal<string | null>(null);
@@ -39,7 +54,14 @@ export class PunchComponent implements OnInit, OnDestroy {
   private watchId?: number;
 
   async ngOnInit(): Promise<void> {
-    this.zones.set(await this.zoneService.loadZones());
+    await this.auth.refreshCurrentUser();
+    const allZones = await this.zoneService.loadZones();
+    const userZoneIds = new Set(this.user()?.zoneIds ?? []);
+    this.zones.set(
+      userZoneIds.size > 0
+        ? allZones.filter(z => z.id !== undefined && userZoneIds.has(z.id))
+        : allZones,
+    );
     this.startLocationWatch();
   }
 

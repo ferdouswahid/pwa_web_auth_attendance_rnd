@@ -30,6 +30,7 @@ export class DashboardComponent implements OnInit {
   todayPunchOut = signal<AttendanceRecord | undefined>(undefined);
 
   async ngOnInit(): Promise<void> {
+    await this.auth.refreshCurrentUser();
     const user = this.user();
     if (!user?.id) return;
     const [records, zones] = await Promise.all([

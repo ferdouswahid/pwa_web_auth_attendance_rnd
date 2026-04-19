@@ -45,6 +45,13 @@ export class AuthService {
     if (updated) this.persist(updated);
   }
 
+  async refreshCurrentUser(): Promise<void> {
+    const userId = this._currentUser()?.id;
+    if (!userId) return;
+    const fresh = await this.db.users.get(userId);
+    if (fresh) this.persist(fresh);
+  }
+
   private persist(user: User): void {
     this._currentUser.set(user);
     sessionStorage.setItem('currentUser', JSON.stringify(user));
