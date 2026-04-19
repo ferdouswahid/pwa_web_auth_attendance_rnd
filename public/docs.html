@@ -531,6 +531,54 @@
             <td>Base64-encoded WebAuthn credential raw ID. Absent if biometric not registered.</td>
           </tr>
           <tr>
+            <td><code>webAuthnUserId</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Hex-encoded 16 random bytes used as <code>user.id</code> in <code>navigator.credentials.create()</code>.</td>
+          </tr>
+          <tr>
+            <td><code>attestationObject</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Base64 CBOR attestation object returned by the authenticator at registration.</td>
+          </tr>
+          <tr>
+            <td><code>publicKey</code></td>
+            <td><span class="type-tag">string | null</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Base64 DER/SPKI public key extracted via <code>response.getPublicKey()</code>. <code>null</code> if browser does not support the method.</td>
+          </tr>
+          <tr>
+            <td><code>publicKeyAlgorithm</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Human-readable algorithm name derived from the COSE integer, e.g. <code>'ES256 (ECDSA P-256)'</code> or <code>'RS256 (RSASSA-PKCS1-v1_5)'</code>.</td>
+          </tr>
+          <tr>
+            <td><code>origin</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Origin captured from <code>clientDataJSON</code> at registration time, e.g. <code>https://example.com</code>.</td>
+          </tr>
+          <tr>
+            <td><code>registeredAt</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td><code>Date.now()</code> timestamp at the moment of biometric registration.</td>
+          </tr>
+          <tr>
+            <td><code>lastSignature</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Base64-encoded signature from the most recent successful biometric verification (punch event).</td>
+          </tr>
+          <tr>
+            <td><code>lastVerifiedAt</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td><code>Date.now()</code> timestamp of the last successful biometric punch.</td>
+          </tr>
+          <tr>
             <td><code>zoneIds</code></td>
             <td><span class="type-tag">number[]</span></td>
             <td><span class="opt-tag">optional</span></td>
@@ -642,11 +690,20 @@
 
     <pre><code><span class="cmt">// src/app/models/user.model.ts</span>
 <span class="kw">export interface</span> <span class="cls">User</span> {
-  id?:           number;    <span class="cmt">// optional: auto-set by Dexie on insert</span>
-  username:      string;
-  passwordHash:  string;    <span class="cmt">// SHA-256 hex, never plaintext</span>
-  credentialId?: string;    <span class="cmt">// base64 WebAuthn rawId, set after biometric enrol</span>
-  zoneIds?:      number[];  <span class="cmt">// allowed zone IDs; undefined/[] = all zones</span>
+  id?:                  number;         <span class="cmt">// optional: auto-set by Dexie on insert</span>
+  username:             string;
+  passwordHash:         string;         <span class="cmt">// SHA-256 hex, never plaintext</span>
+  <span class="cmt">// WebAuthn registration fields</span>
+  credentialId?:        string;         <span class="cmt">// base64 WebAuthn rawId, set after biometric enrol</span>
+  webAuthnUserId?:      string;         <span class="cmt">// hex — random user.id bytes from credentials.create()</span>
+  attestationObject?:   string;         <span class="cmt">// base64 CBOR attestation object</span>
+  publicKey?:           string | null;  <span class="cmt">// base64 DER/SPKI — from response.getPublicKey()</span>
+  publicKeyAlgorithm?:  string;         <span class="cmt">// e.g. 'ES256 (ECDSA P-256)'</span>
+  origin?:              string;         <span class="cmt">// e.g. https://example.com</span>
+  registeredAt?:        number;         <span class="cmt">// Date.now() at registration</span>
+  lastSignature?:       string;         <span class="cmt">// base64 — signature from last successful punch</span>
+  lastVerifiedAt?:      number;         <span class="cmt">// Date.now() of last successful punch</span>
+  zoneIds?:             number[];       <span class="cmt">// allowed zone IDs; undefined/[] = all zones</span>
 }
 
 <span class="cmt">// src/app/models/attendance.model.ts</span>
@@ -737,8 +794,8 @@ const passwordHash = Array.from(new Uint8Array(hashBuffer))
           <div class="step-label">Write user to IndexedDB</div>
           <div class="step-desc">
             <code>db.users.add({ username, passwordHash })</code> inserts the record.
-            Dexie auto-assigns <code>id</code> (auto-increment). <code>credentialId</code> and
-            <code>zoneIds</code> are absent at this point.
+            Dexie auto-assigns <code>id</code> (auto-increment). WebAuthn fields (<code>credentialId</code>, <code>publicKey</code>, etc.) and
+            <code>zoneIds</code> are absent at this point — they are populated on biometric enrolment and zone assignment.
           </div>
           <div class="step-code">
 await this.db.users.add({ username, passwordHash });
@@ -804,7 +861,7 @@ if (hash !== user.passwordHash) throw new Error('Invalid password');
         <div class="step-content">
           <div class="step-label">Persist session to sessionStorage</div>
           <div class="step-desc">
-            On successful match, the full <code>User</code> object (including <code>credentialId</code>
+            On successful match, the full <code>User</code> object (including <code>credentialId</code>, WebAuthn fields,
             if set) is serialised as JSON and stored in <code>sessionStorage</code> under the key
             <code>'currentUser'</code>. It is <strong>not</strong> stored in <code>localStorage</code>
             — the session ends when the tab or browser is closed.
@@ -881,7 +938,11 @@ sessionStorage.setItem('currentUser', JSON.stringify(user));
         </tr>
         <tr>
           <td>Biometric credential registered</td>
-          <td><code>updateCredentialId()</code> patches IndexedDB + re-serialises session with new <code>credentialId</code></td>
+          <td><code>updateCredentialId()</code> patches IndexedDB with all WebAuthn fields (<code>credentialId</code>, <code>webAuthnUserId</code>, <code>attestationObject</code>, <code>publicKey</code>, <code>publicKeyAlgorithm</code>, <code>origin</code>, <code>registeredAt</code>) and re-serialises session</td>
+        </tr>
+        <tr>
+          <td>Successful punch (biometric)</td>
+          <td><code>updateLastVerified()</code> writes <code>lastSignature</code> (base64 assertion signature) and <code>lastVerifiedAt</code> (<code>Date.now()</code>) to IndexedDB and refreshes session</td>
         </tr>
         <tr>
           <td>Punch page loads</td>
@@ -1081,16 +1142,26 @@ await this.db.users.add({ username, passwordHash, zoneIds });
     </div>
 
     <h3>Registration — <code>registerBiometric(username)</code></h3>
-    <p>Called from the <strong>Punch page</strong> when the user clicks "Enable Fingerprint".</p>
+    <p>Called from the <strong>Punch page</strong> when the user clicks "Enable Fingerprint". Returns a <code>BiometricRegistration</code> object with all credential data to persist.</p>
+
+    <pre><code><span class="kw">export interface</span> <span class="cls">BiometricRegistration</span> {
+  credentialId:       string;         <span class="cmt">// base64 rawId</span>
+  webAuthnUserId:     string;         <span class="cmt">// hex random bytes used as user.id</span>
+  attestationObject:  string;         <span class="cmt">// base64 CBOR</span>
+  publicKey:          string | null;  <span class="cmt">// base64 DER/SPKI — null if browser unsupported</span>
+  publicKeyAlgorithm: string;         <span class="cmt">// e.g. 'ES256 (ECDSA P-256)'</span>
+  origin:             string;
+  registeredAt:       number;         <span class="cmt">// Date.now()</span>
+}</code></pre>
 
     <div class="flow">
       <div class="flow-step">
         <div class="step-num">1</div>
         <div class="step-content">
-          <div class="step-label">Generate cryptographically random challenge and userId</div>
+          <div class="step-label">Generate cryptographically random challenge and userId bytes</div>
           <div class="step-code">
-const challenge = crypto.getRandomValues(new Uint8Array(32));
-const userId    = crypto.getRandomValues(new Uint8Array(16));
+const challenge    = crypto.getRandomValues(new Uint8Array(32));
+const userIdBytes  = crypto.getRandomValues(new Uint8Array(16));
           </div>
         </div>
       </div>
@@ -1110,7 +1181,7 @@ const credential = await navigator.credentials.create({
   publicKey: {
     challenge,
     rp: { name: 'R&amp;D Attendance System', id: window.location.hostname },
-    user: { id: userId, name: username, displayName: username },
+    user: { id: userIdBytes, name: username, displayName: username },
     pubKeyCredParams: [
       { alg: -7,   type: 'public-key' },  // ES256 (ECDSA P-256)
       { alg: -257, type: 'public-key' },  // RS256 (RSASSA-PKCS1-v1_5)
@@ -1121,7 +1192,7 @@ const credential = await navigator.credentials.create({
       residentKey: 'preferred',
     },
     timeout:     60000,
-    attestation: 'none',  // no attestation needed (R&amp;D mode)
+    attestation: 'none',
   },
 });
           </div>
@@ -1131,15 +1202,23 @@ const credential = await navigator.credentials.create({
       <div class="flow-step">
         <div class="step-num">3</div>
         <div class="step-content">
-          <div class="step-label">Extract and encode the credential raw ID</div>
+          <div class="step-label">Extract public key via getPublicKey()</div>
           <div class="step-desc">
-            <code>credential.rawId</code> is an <code>ArrayBuffer</code> — a unique identifier
-            for this credential bound to the current origin (<code>rpId = hostname</code>).
-            It is Base64-encoded for storage as a string.
+            <code>AuthenticatorAttestationResponse.getPublicKey()</code> (Chrome 85+, Firefox 117+, Safari 16+)
+            returns the SubjectPublicKeyInfo (SPKI) DER-encoded public key as an <code>ArrayBuffer</code>.
+            <code>getPublicKeyAlgorithm()</code> returns the COSE integer which is mapped to a readable name.
           </div>
           <div class="step-code">
-return btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-// Result: e.g. "AQID..." — stored in user.credentialId in IndexedDB
+const response = credential.response as AuthenticatorAttestationResponse;
+const pubKeyBuffer = response.getPublicKey?.() ?? null;
+const pubKeyBase64 = pubKeyBuffer
+  ? btoa(String.fromCharCode(...new Uint8Array(pubKeyBuffer)))
+  : null;
+
+const alg = response.getPublicKeyAlgorithm?.() ?? 0;
+const publicKeyAlgorithm =
+  alg === -7   ? 'ES256 (ECDSA P-256)'          :
+  alg === -257 ? 'RS256 (RSASSA-PKCS1-v1_5)'    : `COSE ${alg}`;
           </div>
         </div>
       </div>
@@ -1147,10 +1226,31 @@ return btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
       <div class="flow-step">
         <div class="step-num">4</div>
         <div class="step-content">
-          <div class="step-label">Save credentialId to IndexedDB + refresh session</div>
+          <div class="step-label">Return BiometricRegistration object to caller</div>
           <div class="step-code">
-await this.auth.updateCredentialId(user.id!, credentialId);
-// db.users.update(userId, { credentialId })
+return {
+  credentialId:      btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+  webAuthnUserId:    [...userIdBytes].map(b => b.toString(16).padStart(2, '0')).join(''),
+  attestationObject: btoa(String.fromCharCode(...new Uint8Array(response.attestationObject))),
+  publicKey:         pubKeyBase64,
+  publicKeyAlgorithm,
+  origin:            clientData.origin,
+  registeredAt:      Date.now(),
+};
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-label">Save all fields to IndexedDB + refresh session</div>
+          <div class="step-code">
+const reg = await this.biometricService.registerBiometric(user.username);
+await this.auth.updateCredentialId(user.id!, reg);
+// db.users.update(userId, { credentialId, webAuthnUserId, attestationObject,
+//   publicKey, publicKeyAlgorithm, origin, registeredAt,
+//   lastSignature: undefined, lastVerifiedAt: undefined })
 // then re-reads user from DB and serialises to sessionStorage
           </div>
         </div>
@@ -1158,7 +1258,12 @@ await this.auth.updateCredentialId(user.id!, credentialId);
     </div>
 
     <h3>Verification — <code>verifyBiometric(credentialId)</code></h3>
-    <p>Called every time the user punches in or out.</p>
+    <p>Called every time the user punches in or out. Returns a <code>BiometricVerification</code> object.</p>
+
+    <pre><code><span class="kw">export interface</span> <span class="cls">BiometricVerification</span> {
+  verified:      boolean;  <span class="cmt">// true if authenticator accepted the biometric</span>
+  lastSignature: string;   <span class="cmt">// base64 assertion signature for audit trail</span>
+}</code></pre>
 
     <div class="flow">
       <div class="flow-step">
@@ -1190,7 +1295,6 @@ const assertion = await navigator.credentials.get({
     timeout: 60000,
   },
 });
-return !!assertion;  // true = verified, false = cancelled/failed
           </div>
         </div>
       </div>
@@ -1198,12 +1302,20 @@ return !!assertion;  // true = verified, false = cancelled/failed
       <div class="flow-step">
         <div class="step-num">3</div>
         <div class="step-content">
-          <div class="step-label">Return boolean — caller proceeds or shows error</div>
+          <div class="step-label">Extract signature and return BiometricVerification</div>
           <div class="step-desc">
-            In this R&amp;D prototype, verification is considered successful if
-            <code>navigator.credentials.get()</code> resolves without throwing. Full
-            server-side signature verification (counter, authenticator data) would be needed
-            in a production system.
+            The assertion's <code>response.signature</code> is the authenticator's cryptographic
+            signature over the challenge + <code>authenticatorData</code>. It is captured as
+            base64 for audit trail storage. The method returns <code>{ verified: true, lastSignature }</code>
+            if the OS accepted the biometric, or <code>{ verified: false, lastSignature: '' }</code>
+            if the user cancelled or the biometric failed.
+          </div>
+          <div class="step-code">
+const response = assertion.response as AuthenticatorAssertionResponse;
+const lastSignature = btoa(String.fromCharCode(
+  ...new Uint8Array(response.signature)
+));
+return { verified: true, lastSignature };
           </div>
         </div>
       </div>
@@ -1213,8 +1325,10 @@ return !!assertion;  // true = verified, false = cancelled/failed
       <strong>R&amp;D scope note:</strong> WebAuthn's full security model requires server-side
       verification of the assertion signature using the stored public key. In this frontend-only
       prototype, we verify that the OS/browser accepted the biometric and returned a credential
-      object — we do not validate the cryptographic signature. For production, a backend would
-      need to store the public key and verify the <code>authenticatorData</code> + signature.
+      object — we capture and store the <code>lastSignature</code> bytes but do not validate
+      the cryptographic signature against the stored public key. For production, a backend would
+      need to verify the <code>authenticatorData</code> + signature using the public key extracted
+      at registration.
     </div>
   </section>
 
@@ -1298,14 +1412,15 @@ this.watchId = this.locationService.watchPosition(
         <div class="step-num">5</div>
         <div class="step-content">
           <div class="step-label">Biometric verification gate</div>
-          <div class="step-desc">If <code>user.credentialId</code> is absent, an error is shown requiring biometric setup first. Otherwise, <code>verifyBiometric(credentialId)</code> is called — the OS prompts for fingerprint.</div>
+          <div class="step-desc">If <code>user.credentialId</code> is absent, an error is shown requiring biometric setup first. Otherwise, <code>verifyBiometric(credentialId)</code> is called — the OS prompts for fingerprint. On success, <code>lastSignature</code> and <code>lastVerifiedAt</code> are persisted to IndexedDB.</div>
           <div class="step-code">
 if (!user.credentialId) {
   this.actionError.set('Fingerprint authentication is required. Please enable it first.');
   return;
 }
-const verified = await this.biometricService.verifyBiometric(user.credentialId);
-if (!verified) { this.actionError.set('Biometric verification failed.'); return; }
+const result = await this.biometricService.verifyBiometric(user.credentialId);
+if (!result.verified) { this.actionError.set('Biometric verification failed. Please try again.'); return; }
+await this.auth.updateLastVerified(user.id!, result.lastSignature);
           </div>
         </div>
       </div>

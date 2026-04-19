@@ -13,6 +13,7 @@ export interface DeviceInfo {
   timezone: string;
   onLine: boolean;
   biometricSupported: boolean;
+  deviceType: string;
 }
 
 @Component({
@@ -41,14 +42,26 @@ export class ProfileComponent implements OnInit {
     const userZoneIds = new Set(u.zoneIds ?? []);
     this.assignedZones.set(allZones.filter(z => z.id !== undefined && userZoneIds.has(z.id)));
 
+    const ua = navigator.userAgent;
+    const deviceType = /iPhone|iPad/.test(ua)
+      ? 'iOS — Face ID / Touch ID'
+      : /Android/.test(ua)
+        ? 'Android — Fingerprint'
+        : /Mac/.test(ua)
+          ? 'macOS — Touch ID'
+          : /Windows/.test(ua)
+            ? 'Windows — Windows Hello'
+            : 'Desktop Browser';
+
     this.deviceInfo.set({
-      userAgent: navigator.userAgent,
+      userAgent: ua,
       platform: navigator.platform,
       language: navigator.language,
       screenResolution: `${screen.width} × ${screen.height}`,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       onLine: navigator.onLine,
       biometricSupported: typeof PublicKeyCredential !== 'undefined',
+      deviceType,
     });
 
     this.loading.set(false);
@@ -56,5 +69,17 @@ export class ProfileComponent implements OnInit {
 
   truncateCredential(id: string): string {
     return id.length > 20 ? id.slice(0, 10) + '…' + id.slice(-10) : id;
+  }
+
+  credentialSnippet(id: string): string {
+    return id.length > 48 ? id.slice(0, 48) + '…' : id;
+  }
+
+  attestationSnippet(att: string): string {
+    return att.length > 60 ? att.slice(0, 60) + '…' : att;
+  }
+
+  formatDate(ts: number): string {
+    return new Date(ts).toLocaleString();
   }
 }

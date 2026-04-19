@@ -28,33 +28,167 @@
           <p class="text-xs text-gray-400 mt-0.5">User ID: #{{ user()?.id }}</p>
         </div>
       </div>
-      <!-- Biometric status -->
-      <div class="px-4 pb-4">
-        @if (user()?.credentialId) {
-          <div class="bg-green-50 border border-green-200 rounded-xl px-3 py-2.5 space-y-1">
-            <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+    </div>
+
+    <!-- ── WebAuthn / Biometric Card ── -->
+    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-4 py-4 border-b border-gray-50 flex items-center justify-between">
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">WebAuthn / Biometric</p>
+        @if (deviceInfo()) {
+          <span class="text-xs font-medium px-2 py-0.5 rounded-full"
+            [class.bg-green-100]="deviceInfo()!.biometricSupported"
+            [class.text-green-700]="deviceInfo()!.biometricSupported"
+            [class.bg-gray-100]="!deviceInfo()!.biometricSupported"
+            [class.text-gray-500]="!deviceInfo()!.biometricSupported">
+            {{ deviceInfo()!.biometricSupported ? 'Supported' : 'Not supported' }}
+          </span>
+        }
+      </div>
+
+      @if (user()?.credentialId) {
+
+        <!-- Registered state -->
+        <div class="divide-y divide-gray-50">
+
+          <!-- Status badge -->
+          <div class="px-4 py-3 flex items-center gap-2">
+            <div class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd"
                   d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                   clip-rule="evenodd" />
               </svg>
-              <p class="text-xs font-semibold text-green-800">Biometric Registered</p>
             </div>
-            <p class="text-xs text-green-700 font-mono break-all">
-              {{ truncateCredential(user()!.credentialId!) }}
-            </p>
+            <div>
+              <p class="text-xs font-semibold text-green-800">Device registered</p>
+            </div>
           </div>
-        } @else {
-          <div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-center gap-2">
-            <svg class="w-4 h-4 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+
+          <!-- Credential ID -->
+          <div class="px-4 py-3">
+            <p class="text-xs text-gray-400 mb-1">
+              Credential ID
+              <span class="text-gray-300 ml-1">public device identifier</span>
+            </p>
+            <p class="text-xs font-mono text-indigo-600 break-all leading-relaxed">{{ credentialSnippet(user()!.credentialId!) }}</p>
+          </div>
+
+          <!-- WebAuthn User ID -->
+          @if (user()?.webAuthnUserId) {
+            <div class="px-4 py-3">
+              <p class="text-xs text-gray-400 mb-1">
+                WebAuthn User ID
+                <span class="text-gray-300 ml-1">hex · random bytes used at registration</span>
+              </p>
+              <p class="text-xs font-mono text-indigo-500 break-all leading-relaxed">{{ user()!.webAuthnUserId }}</p>
+            </div>
+          }
+
+          <!-- Attestation Object -->
+          @if (user()?.attestationObject) {
+            <div class="px-4 py-3">
+              <p class="text-xs text-gray-400 mb-1">
+                Attestation Object
+                <span class="text-gray-300 ml-1">base64 · contains public key</span>
+              </p>
+              <p class="text-xs font-mono text-amber-600 break-all leading-relaxed">{{ attestationSnippet(user()!.attestationObject!) }}</p>
+            </div>
+          }
+
+          <!-- Public Key -->
+          @if (user()?.publicKey) {
+            <div class="px-4 py-3">
+              <p class="text-xs text-gray-400 mb-1">
+                Public Key
+                <span class="text-gray-300 ml-1">base64 DER/SPKI · used to verify signatures</span>
+              </p>
+              <p class="text-xs font-mono text-green-600 break-all leading-relaxed">{{ user()!.publicKey }}</p>
+            </div>
+          } @else if (user()?.credentialId) {
+            <div class="px-4 py-3 flex items-center justify-between gap-4">
+              <p class="text-xs text-gray-400">Public Key</p>
+              <p class="text-xs text-gray-400 italic">Not available — browser does not support getPublicKey()</p>
+            </div>
+          }
+
+          <!-- Public Key Algorithm -->
+          @if (user()?.publicKeyAlgorithm) {
+            <div class="px-4 py-3 flex items-center justify-between gap-4">
+              <p class="text-xs text-gray-400 flex-shrink-0">Algorithm</p>
+              <span class="text-xs font-semibold font-mono bg-green-50 text-green-700 px-2 py-0.5 rounded-lg">{{ user()!.publicKeyAlgorithm }}</span>
+            </div>
+          }
+
+          <!-- Origin -->
+          @if (user()?.origin) {
+            <div class="px-4 py-3 flex items-center justify-between gap-4">
+              <p class="text-xs text-gray-400 flex-shrink-0">Origin</p>
+              <p class="text-xs font-mono text-gray-700 text-right truncate">{{ user()!.origin }}</p>
+            </div>
+          }
+
+          <!-- Registered At -->
+          @if (user()?.registeredAt) {
+            <div class="px-4 py-3 flex items-center justify-between gap-4">
+              <p class="text-xs text-gray-400 flex-shrink-0">Registered At</p>
+              <p class="text-xs font-medium text-gray-700 text-right">{{ formatDate(user()!.registeredAt!) }}</p>
+            </div>
+          }
+
+          <!-- Last Signature -->
+          @if (user()?.lastSignature) {
+            <div class="px-4 py-3">
+              <p class="text-xs text-gray-400 mb-1">
+                Last Signature
+                <span class="text-gray-300 ml-1">base64 · signed by private key during last punch</span>
+              </p>
+              <p class="text-xs font-mono text-indigo-400 break-all leading-relaxed">{{ credentialSnippet(user()!.lastSignature!) }}</p>
+            </div>
+          }
+
+          <!-- Last Verified At -->
+          @if (user()?.lastVerifiedAt) {
+            <div class="px-4 py-3 flex items-center justify-between gap-4">
+              <p class="text-xs text-gray-400 flex-shrink-0">Last Verified At</p>
+              <p class="text-xs font-medium text-gray-700 text-right">{{ formatDate(user()!.lastVerifiedAt!) }}</p>
+            </div>
+          }
+
+          <!-- Authenticator type -->
+          @if (deviceInfo()) {
+            <div class="px-4 py-3 flex items-center justify-between gap-4">
+              <p class="text-xs text-gray-400">Authenticator</p>
+              <p class="text-xs font-medium text-gray-700 text-right">{{ deviceInfo()!.deviceType }}</p>
+            </div>
+          }
+
+        </div>
+
+
+      } @else {
+
+        <!-- Not registered state -->
+        <div class="px-4 py-4 space-y-3">
+          <div class="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 flex items-start gap-2">
+            <svg class="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd"
                 d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
                 clip-rule="evenodd" />
             </svg>
-            <p class="text-xs text-amber-700">No biometric registered</p>
+            <div>
+              <p class="text-xs font-semibold text-amber-800">No biometric registered</p>
+              <p class="text-xs text-amber-600 mt-0.5">Go to Punch page to register this device</p>
+            </div>
           </div>
-        }
-      </div>
+          @if (deviceInfo()) {
+            <div class="flex items-center justify-between gap-4 px-1">
+              <p class="text-xs text-gray-400">Authenticator available</p>
+              <p class="text-xs font-medium text-gray-700">{{ deviceInfo()!.deviceType }}</p>
+            </div>
+          }
+        </div>
+
+      }
     </div>
 
     <!-- ── Assigned Zones ── -->
@@ -85,57 +219,6 @@
         </div>
       }
     </div>
-
-    <!-- ── Device Info ── -->
-    @if (deviceInfo()) {
-      <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
-        <div class="px-4 py-4 border-b border-gray-50">
-          <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Device Information</p>
-        </div>
-        <div class="divide-y divide-gray-50">
-          <div class="px-4 py-3 flex items-start justify-between gap-4">
-            <p class="text-xs text-gray-400 flex-shrink-0 mt-0.5">Platform</p>
-            <p class="text-xs font-medium text-gray-700 text-right">{{ deviceInfo()!.platform }}</p>
-          </div>
-          <div class="px-4 py-3 flex items-start justify-between gap-4">
-            <p class="text-xs text-gray-400 flex-shrink-0 mt-0.5">Language</p>
-            <p class="text-xs font-medium text-gray-700 text-right">{{ deviceInfo()!.language }}</p>
-          </div>
-          <div class="px-4 py-3 flex items-start justify-between gap-4">
-            <p class="text-xs text-gray-400 flex-shrink-0 mt-0.5">Screen</p>
-            <p class="text-xs font-medium text-gray-700 text-right">{{ deviceInfo()!.screenResolution }}</p>
-          </div>
-          <div class="px-4 py-3 flex items-start justify-between gap-4">
-            <p class="text-xs text-gray-400 flex-shrink-0 mt-0.5">Timezone</p>
-            <p class="text-xs font-medium text-gray-700 text-right">{{ deviceInfo()!.timezone }}</p>
-          </div>
-          <div class="px-4 py-3 flex items-start justify-between gap-4">
-            <p class="text-xs text-gray-400 flex-shrink-0 mt-0.5">Network</p>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
-              [class.bg-green-100]="deviceInfo()!.onLine"
-              [class.text-green-700]="deviceInfo()!.onLine"
-              [class.bg-red-100]="!deviceInfo()!.onLine"
-              [class.text-red-600]="!deviceInfo()!.onLine">
-              {{ deviceInfo()!.onLine ? 'Online' : 'Offline' }}
-            </span>
-          </div>
-          <div class="px-4 py-3 flex items-start justify-between gap-4">
-            <p class="text-xs text-gray-400 flex-shrink-0 mt-0.5">WebAuthn</p>
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
-              [class.bg-green-100]="deviceInfo()!.biometricSupported"
-              [class.text-green-700]="deviceInfo()!.biometricSupported"
-              [class.bg-gray-100]="!deviceInfo()!.biometricSupported"
-              [class.text-gray-500]="!deviceInfo()!.biometricSupported">
-              {{ deviceInfo()!.biometricSupported ? 'Supported' : 'Not supported' }}
-            </span>
-          </div>
-          <div class="px-4 py-3">
-            <p class="text-xs text-gray-400 mb-1">User Agent</p>
-            <p class="text-xs text-gray-600 break-all font-mono leading-relaxed">{{ deviceInfo()!.userAgent }}</p>
-          </div>
-        </div>
-      </div>
-    }
 
     <!-- ── Attendance Logs removed ── -->
 

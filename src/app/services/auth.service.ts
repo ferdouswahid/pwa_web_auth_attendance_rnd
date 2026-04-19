@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { DbService } from './db.service';
 import { User } from '../models/user.model';
+import { BiometricRegistration } from './biometric.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -39,8 +40,24 @@ export class AuthService {
     sessionStorage.removeItem('currentUser');
   }
 
-  async updateCredentialId(userId: number, credentialId: string): Promise<void> {
-    await this.db.users.update(userId, { credentialId });
+  async updateCredentialId(userId: number, reg: BiometricRegistration): Promise<void> {
+    await this.db.users.update(userId, {
+      credentialId: reg.credentialId,
+      webAuthnUserId: reg.webAuthnUserId,
+      attestationObject: reg.attestationObject,
+      publicKey: reg.publicKey,
+      publicKeyAlgorithm: reg.publicKeyAlgorithm,
+      origin: reg.origin,
+      registeredAt: reg.registeredAt,
+      lastSignature: undefined,
+      lastVerifiedAt: undefined,
+    });
+    const updated = await this.db.users.get(userId);
+    if (updated) this.persist(updated);
+  }
+
+  async updateLastVerified(userId: number, lastSignature: string): Promise<void> {
+    await this.db.users.update(userId, { lastSignature, lastVerifiedAt: Date.now() });
     const updated = await this.db.users.get(userId);
     if (updated) this.persist(updated);
   }

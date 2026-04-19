@@ -106,8 +106,8 @@ export class PunchComponent implements OnInit, OnDestroy {
     this.actionError.set(null);
     this.actionMessage.set(null);
     try {
-      const credentialId = await this.biometricService.registerBiometric(user.username);
-      await this.auth.updateCredentialId(user.id!, credentialId);
+      const reg = await this.biometricService.registerBiometric(user.username);
+      await this.auth.updateCredentialId(user.id!, reg);
       this.actionMessage.set('Fingerprint registered successfully!');
     } catch (err) {
       this.actionError.set(
@@ -136,11 +136,12 @@ export class PunchComponent implements OnInit, OnDestroy {
     if (user.credentialId) {
       this.loadingState.set('biometric');
       try {
-        const verified = await this.biometricService.verifyBiometric(user.credentialId);
-        if (!verified) {
+        const result = await this.biometricService.verifyBiometric(user.credentialId);
+        if (!result.verified) {
           this.actionError.set('Biometric verification failed. Please try again.');
           return;
         }
+        await this.auth.updateLastVerified(user.id!, result.lastSignature);
       } catch (err) {
         this.actionError.set(err instanceof Error ? err.message : 'Biometric error');
         return;
