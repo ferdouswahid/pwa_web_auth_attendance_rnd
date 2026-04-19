@@ -1,5 +1,4 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { ZoneService } from '../../services/zone.service';
 import { Zone } from '../../models/zone.model';
@@ -19,7 +18,7 @@ export interface DeviceInfo {
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [DatePipe, NavShellComponent],
+  imports: [NavShellComponent],
   templateUrl: './profile.html',
 })
 export class ProfileComponent implements OnInit {

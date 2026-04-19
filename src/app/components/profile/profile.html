@@ -9,10 +9,10 @@
     </div>
   } @else {
 
-  <div class="max-w-lg mx-auto px-4 py-6 space-y-4">
+  <div class="w-full max-w-lg min-w-0 mx-auto px-4 py-6 space-y-4">
 
     <!-- ── User Identity Card ── -->
-    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div class="w-full min-w-0 bg-white rounded-2xl shadow-sm overflow-hidden">
       <div class="px-4 py-4 border-b border-gray-50">
         <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Account</p>
       </div>
@@ -31,7 +31,7 @@
     </div>
 
     <!-- ── WebAuthn / Biometric Card ── -->
-    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div class="w-full min-w-0 bg-white rounded-2xl shadow-sm overflow-hidden">
       <div class="px-4 py-4 border-b border-gray-50 flex items-center justify-between">
         <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">WebAuthn / Biometric</p>
         @if (deviceInfo()) {
@@ -91,7 +91,7 @@
                 Attestation Object
                 <span class="text-gray-300 ml-1">base64 · contains public key</span>
               </p>
-              <p class="text-xs font-mono text-amber-600 break-all leading-relaxed">{{ attestationSnippet(user()!.attestationObject!) }}</p>
+              <p class="text-xs font-mono text-amber-600 break-all leading-relaxed">{{ user()!.attestationObject }}</p>
             </div>
           }
 
@@ -121,9 +121,9 @@
 
           <!-- Origin -->
           @if (user()?.origin) {
-            <div class="px-4 py-3 flex items-center justify-between gap-4">
-              <p class="text-xs text-gray-400 flex-shrink-0">Origin</p>
-              <p class="text-xs font-mono text-gray-700 text-right truncate">{{ user()!.origin }}</p>
+            <div class="px-4 py-3">
+              <p class="text-xs text-gray-400 mb-1">Origin</p>
+              <p class="text-xs font-mono text-gray-700 break-all leading-relaxed">{{ user()!.origin }}</p>
             </div>
           }
 
@@ -192,7 +192,7 @@
     </div>
 
     <!-- ── Assigned Zones ── -->
-    <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div class="w-full min-w-0 bg-white rounded-2xl shadow-sm overflow-hidden">
       <div class="px-4 py-4 border-b border-gray-50 flex items-center justify-between">
         <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Assigned Zones</p>
         <span class="text-xs font-bold text-indigo-600">{{ assignedZones().length }}</span>

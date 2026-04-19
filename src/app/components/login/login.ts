@@ -21,6 +21,11 @@ export class LoginComponent {
 
   error = signal<string | null>(null);
   loading = signal(false);
+  showPassword = signal(false);
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update(value => !value);
+  }
 
   async onSubmit(): Promise<void> {
     if (this.form.invalid || this.loading()) return;

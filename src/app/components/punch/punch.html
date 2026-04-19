@@ -185,7 +185,7 @@
       <button
         (click)="punch('in')"
         [disabled]="loadingState() === 'location' || !coords() || !activeZone() || !user()?.credentialId || loadingState() === 'punch' || loadingState() === 'biometric'"
-        class="bg-green-500 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-6 rounded-2xl transition-colors flex flex-col items-center justify-center gap-2 shadow-sm">
+        class="bg-green-500 hover:bg-green-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-5 rounded-2xl transition-colors flex flex-col items-center justify-center gap-2 shadow-sm">
         @if (loadingState() === 'punch') {
           <svg class="w-7 h-7 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -203,7 +203,7 @@
       <button
         (click)="punch('out')"
         [disabled]="loadingState() === 'location' || !coords() || !activeZone() || !user()?.credentialId || loadingState() === 'punch' || loadingState() === 'biometric'"
-        class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-6 rounded-2xl transition-colors flex flex-col items-center justify-center gap-2 shadow-sm">
+        class="bg-red-500 hover:bg-red-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-5 rounded-2xl transition-colors flex flex-col items-center justify-center gap-2 shadow-sm">
         @if (loadingState() === 'punch') {
           <svg class="w-7 h-7 animate-spin" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

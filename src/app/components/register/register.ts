@@ -1,16 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { FormBuilder, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
-
-function passwordMatchValidator(control: AbstractControl): ValidationErrors | null {
-  const password = control.get('password');
-  const confirm = control.get('confirmPassword');
-  if (password && confirm && password.value !== confirm.value) {
-    return { passwordMismatch: true };
-  }
-  return null;
-}
 
 @Component({
   selector: 'app-register',
@@ -23,18 +14,19 @@ export class RegisterComponent {
   private router = inject(Router);
   private fb = inject(FormBuilder);
 
-  form = this.fb.group(
-    {
-      username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required]],
-    },
-    { validators: passwordMatchValidator },
-  );
+  form = this.fb.group({
+    username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
+    password: ['', [Validators.required, Validators.minLength(6)]],
+  });
 
   error = signal<string | null>(null);
   loading = signal(false);
   success = signal(false);
+  showPassword = signal(false);
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update(value => !value);
+  }
 
   async onSubmit(): Promise<void> {
     if (this.form.invalid || this.loading()) return;
