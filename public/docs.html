@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Documentation — PWA Attendance R&amp;D</title>
+</head>
+
+<body>
+<style>
+  /* ===== Reset & Base ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ===== Layout ===== */
+  .sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+    background: #1e293b;
+    border-right: 1px solid #334155;
+    overflow-y: auto;
+    padding: 24px 0;
+    z-index: 100;
+  }
+  .sidebar-title {
+    padding: 0 20px 16px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #64748b;
+    border-bottom: 1px solid #334155;
+    margin-bottom: 12px;
+  }
+  .sidebar a {
+    display: block; padding: 6px 20px;
+    color: #94a3b8; text-decoration: none; font-size: 13px;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  .sidebar a:hover { color: #e2e8f0; background: #0f172a; border-left-color: #3b82f6; }
+  .sidebar .section-header {
+    padding: 14px 20px 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: #475569;
+  }
+
+  .content {
+    margin-left: 260px;
+    padding: 48px 56px;
+    max-width: 960px;
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 40px 48px;
+    margin-bottom: 56px;
+  }
+  .hero h1 { font-size: 28px; font-weight: 800; color: #f8fafc; margin-bottom: 8px; }
+  .hero p  { color: #94a3b8; font-size: 15px; max-width: 600px; }
+  .badge-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .badge {
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+  }
+  .badge-blue   { background: #1d4ed8; color: #bfdbfe; }
+  .badge-green  { background: #15803d; color: #bbf7d0; }
+  .badge-purple { background: #7e22ce; color: #e9d5ff; }
+  .badge-amber  { background: #b45309; color: #fde68a; }
+  .badge-red    { background: #b91c1c; color: #fecaca; }
+  .badge-slate  { background: #334155; color: #cbd5e1; }
+
+  /* ===== Section ===== */
+  .section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  .section-title {
+    font-size: 22px; font-weight: 800; color: #f1f5f9;
+    padding-bottom: 12px; margin-bottom: 24px;
+    border-bottom: 1px solid #334155;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title .icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .icon-blue   { background: #1e3a8a; }
+  .icon-green  { background: #14532d; }
+  .icon-purple { background: #4c1d95; }
+  .icon-amber  { background: #78350f; }
+  .icon-red    { background: #7f1d1d; }
+  .icon-teal   { background: #134e4a; }
+  .icon-indigo { background: #312e81; }
+  .icon-rose   { background: #881337; }
+
+  h3 { font-size: 16px; font-weight: 700; color: #e2e8f0; margin: 28px 0 12px; }
+  h4 { font-size: 13px; font-weight: 700; color: #94a3b8; text-transform: uppercase;
+       letter-spacing: 0.08em; margin: 20px 0 8px; }
+  p  { color: #94a3b8; margin-bottom: 12px; }
+  ul { color: #94a3b8; padding-left: 20px; margin-bottom: 12px; }
+  ul li { margin-bottom: 4px; }
+  strong { color: #e2e8f0; }
+
+  /* ===== Code Blocks ===== */
+  pre {
+    background: #020617;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e2e8f0;
+    margin: 12px 0 24px;
+  }
+  code {
+    background: #1e293b; border: 1px solid #334155;
+    border-radius: 4px; padding: 2px 6px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px; color: #7dd3fc;
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* Syntax highlight classes */
+  .kw  { color: #c084fc; }  /* keyword */
+  .fn  { color: #60a5fa; }  /* function/method */
+  .str { color: #86efac; }  /* string */
+  .cmt { color: #475569; font-style: italic; }  /* comment */
+  .num { color: #fb923c; }  /* number */
+  .cls { color: #fbbf24; }  /* class/type */
+  .dec { color: #f472b6; }  /* decorator */
+
+  /* ===== Cards / Panels ===== */
+  .card {
+    background: #1e293b; border: 1px solid #334155;
+    border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;
+  }
+  .card-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 10px; }
+
+  .info-box {
+    background: #172554; border: 1px solid #1e3a8a;
+    border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+    color: #bfdbfe; font-size: 14px;
+  }
+  .warn-box {
+    background: #451a03; border: 1px solid #92400e;
+    border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+    color: #fde68a; font-size: 14px;
+  }
+  .success-box {
+    background: #052e16; border: 1px solid #166534;
+    border-radius: 8px; padding: 14px 18px; margin: 16px 0;
+    color: #bbf7d0; font-size: 14px;
+  }
+
+  /* ===== Flow Steps ===== */
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 16px 0 24px; }
+  .flow-step {
+    display: flex; gap: 16px; align-items: flex-start;
+    position: relative; padding-bottom: 20px;
+  }
+  .flow-step:last-child { padding-bottom: 0; }
+  .flow-step::before {
+    content: '';
+    position: absolute; left: 17px; top: 36px; bottom: 0; width: 2px;
+    background: #334155;
+  }
+  .flow-step:last-child::before { display: none; }
+  .step-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #1d4ed8; color: #bfdbfe;
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; z-index: 1;
+  }
+  .step-content { flex: 1; padding-top: 6px; }
+  .step-label { font-weight: 700; color: #e2e8f0; font-size: 14px; margin-bottom: 4px; }
+  .step-desc  { color: #94a3b8; font-size: 13px; }
+  .step-code  {
+    background: #020617; border: 1px solid #1e3a5f;
+    border-radius: 6px; padding: 10px 14px;
+    font-family: 'Cascadia Code', monospace;
+    font-size: 12px; color: #e2e8f0;
+    margin-top: 8px; overflow-x: auto;
+  }
+
+  /* ===== Table ===== */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 13px; }
+  th {
+    background: #1e293b; color: #94a3b8;
+    text-align: left; padding: 10px 14px;
+    font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid #334155;
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid #1e293b; color: #cbd5e1; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1e293b; }
+  .type-tag {
+    background: #0c4a6e; color: #7dd3fc;
+    padding: 2px 7px; border-radius: 4px;
+    font-family: monospace; font-size: 12px;
+  }
+  .req-tag  { background: #7f1d1d; color: #fca5a5; padding: 2px 7px; border-radius: 4px; font-size: 11px; }
+  .opt-tag  { background: #1c1917; color: #78716c; padding: 2px 7px; border-radius: 4px; font-size: 11px; }
+  .idx-tag  { background: #1e1b4b; color: #a5b4fc; padding: 2px 7px; border-radius: 4px; font-size: 11px; }
+  .pk-tag   { background: #14532d; color: #86efac; padding: 2px 7px; border-radius: 4px; font-size: 11px; }
+
+  /* ===== Divider ===== */
+  hr { border: none; border-top: 1px solid #1e293b; margin: 32px 0; }
+
+  /* ===== Arch grid ===== */
+  .arch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0 24px; }
+
+  /* ===== Footer ===== */
+  .footer {
+    margin-top: 80px; padding-top: 32px;
+    border-top: 1px solid #334155;
+    color: #475569; font-size: 12px; text-align: center;
+  }
+</style>
+
+<!-- ===== Sidebar ===== -->
+<nav class="sidebar">
+  <div class="sidebar-title">Attendance System Docs</div>
+
+  <div class="section-header">Overview</div>
+  <a href="#overview">Architecture Overview</a>
+  <a href="#tech-stack">Tech Stack</a>
+  <a href="#file-structure">File Structure</a>
+
+  <div class="section-header">Data Layer</div>
+  <a href="#database">Database (IndexedDB / Dexie)</a>
+  <a href="#models">Data Models</a>
+
+  <div class="section-header">Auth Flows</div>
+  <a href="#registration">Registration Flow</a>
+  <a href="#login">Login Flow</a>
+  <a href="#session">Session Management</a>
+  <a href="#guards">Route Guards</a>
+
+  <div class="section-header">Features</div>
+  <a href="#employee">Employee Management</a>
+  <a href="#zones">Zone Management</a>
+  <a href="#biometric">Biometric (WebAuthn)</a>
+  <a href="#punch">Punch Flow</a>
+  <a href="#location">Location Service</a>
+  <a href="#attendance">Attendance Records</a>
+
+  <div class="section-header">Platform</div>
+  <a href="#signals">State (Signals)</a>
+  <a href="#pwa">PWA &amp; Offline</a>
+  <a href="#security">Security Notes</a>
+</nav>
+
+<!-- ===== Main Content ===== -->
+<main class="content">
+
+  <!-- ===== HERO ===== -->
+  <div class="hero">
+    <h1>PWA Attendance System — Technical Reference</h1>
+    <p>Code-level documentation covering data storage, authentication flows, biometrics, geofencing, and state management. Intended for engineering review.</p>
+    <div class="badge-row">
+      <span class="badge badge-blue">Angular 21 Standalone</span>
+      <span class="badge badge-green">Dexie 4 / IndexedDB</span>
+      <span class="badge badge-purple">WebAuthn Biometrics</span>
+      <span class="badge badge-amber">Leaflet 1.9</span>
+      <span class="badge badge-red">Tailwind CSS v4</span>
+      <span class="badge badge-slate">No Backend · No HTTP</span>
+    </div>
+  </div>
+
+  <!-- ===== ARCHITECTURE OVERVIEW ===== -->
+  <section id="overview" class="section">
+    <div class="section-title">
+      <div class="icon icon-blue">🏗️</div>
+      Architecture Overview
+    </div>
+
+    <p>
+      This is a <strong>fully client-side Progressive Web App</strong>. There is no backend server,
+      no REST API, no GraphQL endpoint, and no WebSocket connection. All business logic, data
+      persistence, authentication, and geofencing run entirely in the browser.
+    </p>
+
+    <div class="info-box">
+      <strong>Key architectural constraint:</strong> The app must function completely offline.
+      All data is stored locally in <strong>IndexedDB</strong> via Dexie.js. Authentication state
+      is persisted in <code>sessionStorage</code>. The service worker (Angular PWA) caches all
+      application assets for offline use.
+    </div>
+
+    <div class="arch-grid">
+      <div class="card">
+        <div class="card-title">Frontend Layer</div>
+        <ul>
+          <li>Angular 21 standalone components</li>
+          <li>Lazy-loaded routes</li>
+          <li>Reactive forms with validation</li>
+          <li>Angular Signals for state</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Persistence Layer</div>
+        <ul>
+          <li>IndexedDB (browser native)</li>
+          <li>Dexie.js ORM wrapper</li>
+          <li>3 tables: users, attendance, zones</li>
+          <li>sessionStorage for auth state</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Security Layer</div>
+        <ul>
+          <li>SHA-256 password hashing (Web Crypto API)</li>
+          <li>WebAuthn platform authenticator</li>
+          <li>Functional route guards</li>
+          <li>No plaintext credentials stored</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="card-title">Platform APIs Used</div>
+        <ul>
+          <li><code>crypto.subtle.digest</code> — password hashing</li>
+          <li><code>navigator.credentials</code> — biometrics</li>
+          <li><code>navigator.geolocation</code> — location</li>
+          <li><code>indexedDB</code> — data storage</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TECH STACK ===== -->
+  <section id="tech-stack" class="section">
+    <div class="section-title">
+      <div class="icon icon-indigo">⚙️</div>
+      Tech Stack
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Concern</th>
+          <th>Library / API</th>
+          <th>Version</th>
+          <th>Purpose</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Framework</td>
+          <td><strong>Angular</strong></td>
+          <td>21</td>
+          <td>Standalone components, signals, lazy routing</td>
+        </tr>
+        <tr>
+          <td>Local Database</td>
+          <td><strong>Dexie.js</strong></td>
+          <td>4</td>
+          <td>IndexedDB ORM — typed tables, versioned schema</td>
+        </tr>
+        <tr>
+          <td>Maps</td>
+          <td><strong>Leaflet</strong></td>
+          <td>1.9</td>
+          <td>Interactive zone/location map</td>
+        </tr>
+        <tr>
+          <td>Styling</td>
+          <td><strong>Tailwind CSS</strong></td>
+          <td>v4</td>
+          <td>Utility-first, mobile-first UI</td>
+        </tr>
+        <tr>
+          <td>Biometrics</td>
+          <td><strong>Web Authentication API</strong></td>
+          <td>L2 spec</td>
+          <td>Platform authenticator (fingerprint / Face ID)</td>
+        </tr>
+        <tr>
+          <td>Cryptography</td>
+          <td><strong>Web Crypto API</strong></td>
+          <td>native</td>
+          <td><code>crypto.subtle.digest</code> for SHA-256 hashing</td>
+        </tr>
+        <tr>
+          <td>PWA</td>
+          <td><strong>&#64;angular/service-worker</strong></td>
+          <td>21</td>
+          <td>Asset caching, offline shell, <code>ngsw-config.json</code></td>
+        </tr>
+        <tr>
+          <td>Testing</td>
+          <td><strong>Vitest</strong></td>
+          <td>latest</td>
+          <td>Unit tests, no TestBed for service tests</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== FILE STRUCTURE ===== -->
+  <section id="file-structure" class="section">
+    <div class="section-title">
+      <div class="icon icon-teal">📁</div>
+      File Structure
+    </div>
+
+    <pre><code>src/app/
+├── app.config.ts          ← Angular providers (router, service worker)
+├── app.routes.ts          ← All lazy-loaded routes + guards
+├── app.ts                 ← Root shell component
+│
+├── models/
+│   ├── user.model.ts      ← User interface
+│   ├── attendance.model.ts← AttendanceRecord interface
+│   └── zone.model.ts      ← Zone interface
+│
+├── services/
+│   ├── db.service.ts      ← Single Dexie instance (extends Dexie)
+│   ├── auth.service.ts    ← Register, login, logout, session
+│   ├── biometric.service.ts← WebAuthn register &amp; verify
+│   ├── employee.service.ts ← Admin CRUD for users
+│   ├── attendance.service.ts← Punch in/out, history
+│   ├── zone.service.ts    ← Zone CRUD, Haversine distance
+│   └── location.service.ts ← Geolocation watchPosition wrapper
+│
+├── guards/
+│   └── auth.guard.ts      ← authGuard (require login), noAuthGuard
+│
+└── components/
+    ├── login/             ← login.ts + login.html
+    ├── register/          ← register.ts + register.html
+    ├── dashboard/         ← dashboard.ts + dashboard.html
+    ├── employees/         ← employees.ts + employees.html
+    ├── zones/             ← zones.ts + zones.html
+    ├── punch/             ← punch.ts + punch.html
+    ├── profile/           ← profile.ts + profile.html
+    ├── map/               ← map.ts + map.html (Leaflet)
+    ├── nav-shell/         ← nav-shell.ts + nav-shell.html
+    └── docs/              ← docs.ts + docs.html (this page)</code></pre>
+  </section>
+
+  <!-- ===== DATABASE ===== -->
+  <section id="database" class="section">
+    <div class="section-title">
+      <div class="icon icon-green">🗄️</div>
+      Database — IndexedDB via Dexie.js
+    </div>
+
+    <p>
+      The app uses a <strong>single IndexedDB database</strong> named <code>AttendanceDB</code>
+      managed by a single <code>DbService</code> class that extends <code>Dexie</code>. This is the
+      only database in the application — all persistence goes through this one instance.
+    </p>
+
+    <h3>DbService — Schema Definition</h3>
+    <pre><code><span class="dec">@Injectable</span>({ <span class="str">providedIn</span>: <span class="str">'root'</span> })
+<span class="kw">export class</span> <span class="cls">DbService</span> <span class="kw">extends</span> <span class="cls">Dexie</span> {
+  users!:      <span class="cls">Table</span>&lt;<span class="cls">User</span>,            number&gt;;
+  attendance!: <span class="cls">Table</span>&lt;<span class="cls">AttendanceRecord</span>, number&gt;;
+  zones!:      <span class="cls">Table</span>&lt;<span class="cls">Zone</span>,            number&gt;;
+
+  constructor() {
+    <span class="kw">super</span>(<span class="str">'AttendanceDB'</span>);
+
+    <span class="cmt">// Version 1 — initial schema</span>
+    <span class="kw">this</span>.<span class="fn">version</span>(<span class="num">1</span>).<span class="fn">stores</span>({
+      users:      <span class="str">'++id, username'</span>,
+      attendance: <span class="str">'++id, userId, timestamp'</span>,
+    });
+
+    <span class="cmt">// Version 2 — adds zones table; existing data preserved</span>
+    <span class="kw">this</span>.<span class="fn">version</span>(<span class="num">2</span>).<span class="fn">stores</span>({
+      zones: <span class="str">'++id, name'</span>,
+    });
+  }
+}</code></pre>
+
+    <h3>Schema Key Syntax (Dexie)</h3>
+    <table>
+      <thead><tr><th>Notation</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>++id</code></td><td>Auto-incrementing integer primary key</td></tr>
+        <tr><td><code>username</code></td><td>Indexed column (enables <code>.where('username')</code> queries)</td></tr>
+        <tr><td><code>userId, timestamp</code></td><td>Multi-index on attendance table for efficient user lookups</td></tr>
+      </tbody>
+    </table>
+
+    <div class="warn-box">
+      <strong>Versioning rule:</strong> When adding a new table or column, increment the version
+      number and only list the <em>new or changed</em> stores in that version's <code>.stores()</code>
+      call. Dexie merges all versions automatically and does not drop existing data.
+    </div>
+
+    <h3>Tables Overview</h3>
+
+    <div class="card">
+      <div class="card-title">Table: <code>users</code></div>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>id</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="pk-tag">PK auto</span></td>
+            <td>Auto-incremented primary key</td>
+          </tr>
+          <tr>
+            <td><code>username</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="req-tag">required</span> <span class="idx-tag">indexed</span></td>
+            <td>Unique login name (enforced in application layer, not DB layer)</td>
+          </tr>
+          <tr>
+            <td><code>passwordHash</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>SHA-256 hex digest of plaintext password</td>
+          </tr>
+          <tr>
+            <td><code>credentialId</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Base64-encoded WebAuthn credential raw ID. Absent if biometric not registered.</td>
+          </tr>
+          <tr>
+            <td><code>zoneIds</code></td>
+            <td><span class="type-tag">number[]</span></td>
+            <td><span class="opt-tag">optional</span></td>
+            <td>Array of Zone IDs the employee is permitted to punch from. Empty = all zones.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Table: <code>attendance</code></div>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>id</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="pk-tag">PK auto</span></td>
+            <td>Auto-incremented primary key</td>
+          </tr>
+          <tr>
+            <td><code>userId</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="req-tag">required</span> <span class="idx-tag">indexed</span></td>
+            <td>Foreign key referencing <code>users.id</code></td>
+          </tr>
+          <tr>
+            <td><code>type</code></td>
+            <td><span class="type-tag">'in' | 'out'</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>Punch direction — clock-in or clock-out event</td>
+          </tr>
+          <tr>
+            <td><code>timestamp</code></td>
+            <td><span class="type-tag">Date</span></td>
+            <td><span class="req-tag">required</span> <span class="idx-tag">indexed</span></td>
+            <td>Exact datetime of punch event (<code>new Date()</code> at write time)</td>
+          </tr>
+          <tr>
+            <td><code>latitude</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>GPS latitude at time of punch (decimal degrees)</td>
+          </tr>
+          <tr>
+            <td><code>longitude</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>GPS longitude at time of punch (decimal degrees)</td>
+          </tr>
+          <tr>
+            <td><code>zoneName</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>Snapshot of zone name at punch time (denormalized for history integrity)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Table: <code>zones</code></div>
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Constraints</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>id</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="pk-tag">PK auto</span></td>
+            <td>Auto-incremented primary key</td>
+          </tr>
+          <tr>
+            <td><code>name</code></td>
+            <td><span class="type-tag">string</span></td>
+            <td><span class="req-tag">required</span> <span class="idx-tag">indexed</span></td>
+            <td>Human-readable zone label (e.g., "Main Office")</td>
+          </tr>
+          <tr>
+            <td><code>lat</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>Center latitude of geofence circle</td>
+          </tr>
+          <tr>
+            <td><code>lng</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>Center longitude of geofence circle</td>
+          </tr>
+          <tr>
+            <td><code>radius</code></td>
+            <td><span class="type-tag">number</span></td>
+            <td><span class="req-tag">required</span></td>
+            <td>Geofence radius in <strong>meters</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== MODELS ===== -->
+  <section id="models" class="section">
+    <div class="section-title">
+      <div class="icon icon-teal">📐</div>
+      Data Models (TypeScript Interfaces)
+    </div>
+
+    <p>All data shapes are <strong>plain TypeScript interfaces</strong>. No classes, no decorators, no inheritance.</p>
+
+    <pre><code><span class="cmt">// src/app/models/user.model.ts</span>
+<span class="kw">export interface</span> <span class="cls">User</span> {
+  id?:           number;    <span class="cmt">// optional: auto-set by Dexie on insert</span>
+  username:      string;
+  passwordHash:  string;    <span class="cmt">// SHA-256 hex, never plaintext</span>
+  credentialId?: string;    <span class="cmt">// base64 WebAuthn rawId, set after biometric enrol</span>
+  zoneIds?:      number[];  <span class="cmt">// allowed zone IDs; undefined/[] = all zones</span>
+}
+
+<span class="cmt">// src/app/models/attendance.model.ts</span>
+<span class="kw">export interface</span> <span class="cls">AttendanceRecord</span> {
+  id?:       number;
+  userId:    number;
+  type:      <span class="str">'in'</span> | <span class="str">'out'</span>;
+  timestamp: Date;
+  latitude:  number;
+  longitude: number;
+  zoneName:  string;  <span class="cmt">// denormalized snapshot</span>
+}
+
+<span class="cmt">// src/app/models/zone.model.ts</span>
+<span class="kw">export interface</span> <span class="cls">Zone</span> {
+  id?:    number;
+  name:   string;
+  lat:    number;
+  lng:    number;
+  radius: number;  <span class="cmt">// meters</span>
+}</code></pre>
+  </section>
+
+  <!-- ===== REGISTRATION ===== -->
+  <section id="registration" class="section">
+    <div class="section-title">
+      <div class="icon icon-blue">📝</div>
+      Registration Flow
+    </div>
+
+    <p>
+      User self-registration is handled by <code>RegisterComponent</code> →
+      <code>AuthService.register()</code>. It uses Angular Reactive Forms with a
+      cross-field password-match validator.
+    </p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-label">User fills the registration form</div>
+          <div class="step-desc">Fields: <strong>username</strong> (3–30 chars), <strong>password</strong> (min 6 chars), <strong>confirmPassword</strong>. A custom <code>passwordMatchValidator</code> cross-validates the two password fields at the form group level.</div>
+          <div class="step-code">
+form = fb.group({
+  username:        ['', [required, minLength(3), maxLength(30)]],
+  password:        ['', [required, minLength(6)]],
+  confirmPassword: ['', [required]],
+}, { validators: passwordMatchValidator });
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-label">Duplicate username check</div>
+          <div class="step-desc">Before inserting, <code>AuthService</code> queries Dexie for any existing record with the same username (case-insensitive via <code>equalsIgnoreCase</code>). If found, throws <code>'Username is already taken'</code>.</div>
+          <div class="step-code">
+const existing = await this.db.users
+  .where('username').equalsIgnoreCase(username).first();
+if (existing) throw new Error('Username is already taken');
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-label">Password hashing with SHA-256</div>
+          <div class="step-desc">
+            The plaintext password is <strong>never stored</strong>. It is hashed using the browser's
+            native <code>crypto.subtle.digest('SHA-256', ...)</code>. The result is a 32-byte
+            <code>ArrayBuffer</code> converted to a 64-character lowercase hex string.
+          </div>
+          <div class="step-code">
+const data = new TextEncoder().encode(password);
+const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+const passwordHash = Array.from(new Uint8Array(hashBuffer))
+  .map(b => b.toString(16).padStart(2, '0'))
+  .join('');  // → 64-char hex string
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-label">Write user to IndexedDB</div>
+          <div class="step-desc">
+            <code>db.users.add({ username, passwordHash })</code> inserts the record.
+            Dexie auto-assigns <code>id</code> (auto-increment). <code>credentialId</code> and
+            <code>zoneIds</code> are absent at this point.
+          </div>
+          <div class="step-code">
+await this.db.users.add({ username, passwordHash });
+// Result stored in IndexedDB → AttendanceDB → users table
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-label">Success → redirect to /login</div>
+          <div class="step-desc">Component sets <code>success = signal(true)</code> and navigates to <code>/login</code> after 1.5 s. The user is <strong>not</strong> automatically logged in after registration.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== LOGIN ===== -->
+  <section id="login" class="section">
+    <div class="section-title">
+      <div class="icon icon-amber">🔐</div>
+      Login Flow
+    </div>
+
+    <p>
+      Handled by <code>LoginComponent</code> → <code>AuthService.login()</code>.
+      Credentials are verified by comparing SHA-256 hashes — the plaintext password
+      is never sent anywhere and never persisted.
+    </p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-label">Look up user by username (case-insensitive)</div>
+          <div class="step-code">
+const user = await this.db.users
+  .where('username').equalsIgnoreCase(username).first();
+if (!user) throw new Error('User not found');
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-label">Hash the submitted password and compare</div>
+          <div class="step-desc">
+            The submitted password is hashed with the same SHA-256 routine used at registration.
+            The resulting hex string is compared directly to <code>user.passwordHash</code> stored
+            in IndexedDB.
+          </div>
+          <div class="step-code">
+const hash = await this.hashPassword(password);
+if (hash !== user.passwordHash) throw new Error('Invalid password');
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-label">Persist session to sessionStorage</div>
+          <div class="step-desc">
+            On successful match, the full <code>User</code> object (including <code>credentialId</code>
+            if set) is serialised as JSON and stored in <code>sessionStorage</code> under the key
+            <code>'currentUser'</code>. It is <strong>not</strong> stored in <code>localStorage</code>
+            — the session ends when the tab or browser is closed.
+          </div>
+          <div class="step-code">
+// private persist(user: User): void
+this._currentUser.set(user);
+sessionStorage.setItem('currentUser', JSON.stringify(user));
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-label">Angular Signal updated — UI reacts instantly</div>
+          <div class="step-desc">
+            <code>_currentUser</code> is a writable <code>signal&lt;User | null&gt;</code>.
+            Components and guards read <code>currentUser()</code> (the readonly projection) — no
+            subscriptions, no observables.
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-label">Navigate to /dashboard</div>
+          <div class="step-desc">Router navigates to <code>/dashboard</code>. The <code>authGuard</code> on that route now passes because <code>auth.currentUser()</code> is truthy.</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Session Restoration on Page Reload</h3>
+    <p>
+      <code>AuthService</code> constructor reads <code>sessionStorage.getItem('currentUser')</code>
+      on service initialisation (which happens at app bootstrap). If valid JSON is found, it is
+      parsed and the signal is pre-populated — the user stays logged in within the same browser tab.
+    </p>
+    <pre><code>constructor(<span class="kw">private</span> db: <span class="cls">DbService</span>) {
+  <span class="kw">const</span> saved = sessionStorage.<span class="fn">getItem</span>(<span class="str">'currentUser'</span>);
+  <span class="kw">if</span> (saved) {
+    <span class="kw">try</span> { <span class="kw">this</span>._currentUser.<span class="fn">set</span>(JSON.<span class="fn">parse</span>(saved) <span class="kw">as</span> <span class="cls">User</span>); }
+    <span class="kw">catch</span> { sessionStorage.<span class="fn">removeItem</span>(<span class="str">'currentUser'</span>); }
+  }
+}</code></pre>
+  </section>
+
+  <!-- ===== SESSION MANAGEMENT ===== -->
+  <section id="session" class="section">
+    <div class="section-title">
+      <div class="icon icon-purple">🪪</div>
+      Session Management
+    </div>
+
+    <table>
+      <thead><tr><th>Scenario</th><th>Behaviour</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>New login</td>
+          <td>User object written to <code>sessionStorage['currentUser']</code> and to <code>_currentUser</code> signal</td>
+        </tr>
+        <tr>
+          <td>Page reload (same tab)</td>
+          <td><code>sessionStorage</code> survives reload → AuthService constructor re-hydrates the signal</td>
+        </tr>
+        <tr>
+          <td>Tab closed / browser closed</td>
+          <td><code>sessionStorage</code> is cleared by browser → user must log in again</td>
+        </tr>
+        <tr>
+          <td>Logout</td>
+          <td><code>sessionStorage.removeItem('currentUser')</code> called; signal set to <code>null</code></td>
+        </tr>
+        <tr>
+          <td>Biometric credential registered</td>
+          <td><code>updateCredentialId()</code> patches IndexedDB + re-serialises session with new <code>credentialId</code></td>
+        </tr>
+        <tr>
+          <td>Punch page loads</td>
+          <td><code>refreshCurrentUser()</code> re-reads from Dexie to pick up latest <code>zoneIds</code> / <code>credentialId</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== ROUTE GUARDS ===== -->
+  <section id="guards" class="section">
+    <div class="section-title">
+      <div class="icon icon-red">🛡️</div>
+      Route Guards
+    </div>
+
+    <p>Both guards are <strong>functional</strong> (plain arrow functions), not class-based. Defined in <code>guards/auth.guard.ts</code>.</p>
+
+    <pre><code><span class="cmt">// authGuard — blocks unauthenticated access, redirects to /login</span>
+<span class="kw">export const</span> authGuard = () => {
+  <span class="kw">const</span> auth   = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">const</span> router = <span class="fn">inject</span>(<span class="cls">Router</span>);
+  <span class="kw">return</span> auth.<span class="fn">currentUser</span>() ? <span class="kw">true</span> : router.<span class="fn">parseUrl</span>(<span class="str">'/login'</span>);
+};
+
+<span class="cmt">// noAuthGuard — blocks already-logged-in users, redirects to /dashboard</span>
+<span class="kw">export const</span> noAuthGuard = () => {
+  <span class="kw">const</span> auth   = <span class="fn">inject</span>(<span class="cls">AuthService</span>);
+  <span class="kw">const</span> router = <span class="fn">inject</span>(<span class="cls">Router</span>);
+  <span class="kw">return</span> !auth.<span class="fn">currentUser</span>() ? <span class="kw">true</span> : router.<span class="fn">parseUrl</span>(<span class="str">'/dashboard'</span>);
+};</code></pre>
+
+    <h3>Route Protection Matrix</h3>
+    <table>
+      <thead><tr><th>Route</th><th>Guard</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>/login</code></td><td><code>noAuthGuard</code></td><td>Redirects logged-in users to <code>/dashboard</code></td></tr>
+        <tr><td><code>/register</code></td><td><code>noAuthGuard</code></td><td>Redirects logged-in users to <code>/dashboard</code></td></tr>
+        <tr><td><code>/dashboard</code></td><td><code>authGuard</code></td><td>Redirects unauthenticated to <code>/login</code></td></tr>
+        <tr><td><code>/zones</code></td><td><code>authGuard</code></td><td>Redirects unauthenticated to <code>/login</code></td></tr>
+        <tr><td><code>/employees</code></td><td><code>authGuard</code></td><td>Redirects unauthenticated to <code>/login</code></td></tr>
+        <tr><td><code>/punch</code></td><td><code>authGuard</code></td><td>Redirects unauthenticated to <code>/login</code></td></tr>
+        <tr><td><code>/profile</code></td><td><code>authGuard</code></td><td>Redirects unauthenticated to <code>/login</code></td></tr>
+        <tr><td><code>/docs</code></td><td><em>none</em></td><td>Accessible without authentication (developer use)</td></tr>
+        <tr><td><code>/**</code></td><td>—</td><td>Wildcard redirect to <code>/login</code></td></tr>
+      </tbody>
+    </table>
+
+    <p>All routes use <strong>lazy-loaded components</strong> via <code>loadComponent</code> — the JavaScript bundle for each page is only fetched when that route is first visited.</p>
+  </section>
+
+  <!-- ===== EMPLOYEE MANAGEMENT ===== -->
+  <section id="employee" class="section">
+    <div class="section-title">
+      <div class="icon icon-teal">👥</div>
+      Employee Management
+    </div>
+
+    <p>
+      The <code>/employees</code> route provides admin-level CRUD for users. It uses
+      <code>EmployeeService</code> which wraps <code>DbService</code> directly.
+      Any logged-in user can access this route (no role differentiation in this R&amp;D prototype).
+    </p>
+
+    <h3>Create Employee</h3>
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-label">Admin fills form: username, password, zone assignments</div>
+          <div class="step-desc">Zone selection is a multi-select toggle — each zone's ID is collected into a <code>Set&lt;number&gt;</code> held in a signal (<code>selectedZoneIds</code>).</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-label">Duplicate username check + SHA-256 hash</div>
+          <div class="step-code">
+const existing = await this.db.users
+  .where('username').equalsIgnoreCase(username).first();
+if (existing) throw new Error('Username already taken');
+const passwordHash = await this.hashPassword(password);
+          </div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-label">Write to IndexedDB with zone assignments</div>
+          <div class="step-code">
+await this.db.users.add({ username, passwordHash, zoneIds });
+// zoneIds: number[] — IDs of zones employee may punch from
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Update Employee</h3>
+    <p>
+      Uses <code>db.users.update(id, patch)</code>. Password update is optional — if the admin
+      leaves the password field blank, <code>passwordHash</code> is not included in the patch
+      object and the existing hash is preserved. Zone assignments are always overwritten.
+    </p>
+    <pre><code><span class="kw">const</span> update: <span class="cls">Partial</span>&lt;<span class="cls">User</span>&gt; = { username: data.username, zoneIds: data.zoneIds };
+<span class="kw">if</span> (data.password) {
+  update.passwordHash = <span class="kw">await</span> <span class="kw">this</span>.<span class="fn">hashPassword</span>(data.password);
+}
+<span class="kw">await</span> <span class="kw">this</span>.db.users.<span class="fn">update</span>(id, update);</code></pre>
+
+    <h3>Delete Employee</h3>
+    <p>
+      <code>db.users.delete(id)</code> removes the user record from IndexedDB.
+      <strong>Note:</strong> Attendance records for the deleted user are not cascaded/removed
+      (they remain in the <code>attendance</code> table orphaned). This is expected behaviour
+      for this R&amp;D prototype.
+    </p>
+
+    <h3>Listing Employees</h3>
+    <p>
+      <code>db.users.orderBy('username').toArray()</code> returns all users sorted alphabetically.
+      The component then maps each user's <code>zoneIds</code> to full <code>Zone</code> objects
+      for display.
+    </p>
+  </section>
+
+  <!-- ===== ZONE MANAGEMENT ===== -->
+  <section id="zones" class="section">
+    <div class="section-title">
+      <div class="icon icon-green">📍</div>
+      Zone Management
+    </div>
+
+    <p>
+      Geofence zones are circular areas defined by a centre point (lat/lng) and a radius in
+      metres. The <code>/zones</code> page uses <code>ZoneService</code> for CRUD and renders
+      each zone as a Leaflet circle on the map.
+    </p>
+
+    <h3>Haversine Distance Algorithm</h3>
+    <p>
+      Zone membership is determined in <code>ZoneService.haversineDistance()</code>.
+      This calculates the great-circle distance between two GPS coordinates on the Earth's
+      surface using the Haversine formula. <strong>No third-party geo library is used.</strong>
+    </p>
+    <pre><code><span class="fn">haversineDistance</span>(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  <span class="kw">const</span> R = <span class="num">6371000</span>;  <span class="cmt">// Earth radius in metres</span>
+  <span class="kw">const</span> toRad = (deg: number) => (deg * Math.PI) / <span class="num">180</span>;
+  <span class="kw">const</span> dLat = toRad(lat2 - lat1);
+  <span class="kw">const</span> dLng = toRad(lng2 - lng1);
+  <span class="kw">const</span> a =
+    Math.sin(dLat / <span class="num">2</span>) ** <span class="num">2</span> +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / <span class="num">2</span>) ** <span class="num">2</span>;
+  <span class="kw">return</span> R * <span class="num">2</span> * Math.atan2(Math.sqrt(a), Math.sqrt(<span class="num">1</span> - a));
+}</code></pre>
+
+    <p>
+      The punch is only allowed when the returned distance is ≤ <code>zone.radius</code>:
+    </p>
+    <pre><code><span class="cmt">// checkUserZone: returns the first zone the user is currently inside</span>
+<span class="kw">const</span> active = zones.<span class="fn">find</span>(z =>
+  <span class="kw">this</span>.<span class="fn">haversineDistance</span>(lat, lng, z.lat, z.lng) &lt;= z.radius
+) ?? <span class="kw">null</span>;</code></pre>
+
+    <h3>Zone–Employee Assignment</h3>
+    <p>
+      When an employee has <code>zoneIds: [2, 5]</code>, the Punch page filters the zone
+      list to only those IDs. If <code>zoneIds</code> is empty or undefined, the employee
+      can punch from any zone.
+    </p>
+    <pre><code><span class="kw">const</span> userZoneIds = <span class="kw">new</span> Set(<span class="kw">this</span>.<span class="fn">user</span>()?.zoneIds ?? []);
+<span class="kw">this</span>.zones.<span class="fn">set</span>(
+  userZoneIds.size > <span class="num">0</span>
+    ? allZones.<span class="fn">filter</span>(z => z.id !== undefined &amp;&amp; userZoneIds.<span class="fn">has</span>(z.id))
+    : allZones,  <span class="cmt">// fallback: all zones if none assigned</span>
+);</code></pre>
+  </section>
+
+  <!-- ===== BIOMETRIC ===== -->
+  <section id="biometric" class="section">
+    <div class="section-title">
+      <div class="icon icon-purple">🔏</div>
+      Biometric Authentication (WebAuthn)
+    </div>
+
+    <p>
+      Biometric login is implemented via the <strong>Web Authentication API (WebAuthn Level 2)</strong>
+      using a <strong>platform authenticator</strong> — this means the device's built-in biometric
+      sensor (fingerprint reader, Face ID, Windows Hello, etc.) is used, not a hardware security
+      key. No biometric data is ever transmitted or stored — the browser/OS handles all biometric
+      matching internally and communicates only credential identifiers to the app.
+    </p>
+
+    <div class="info-box">
+      <strong>Support check:</strong> <code>BiometricService.isSupported()</code> verifies
+      <code>window.PublicKeyCredential</code> exists before any WebAuthn call. If not available,
+      biometric buttons are hidden and the user must use password-only punch.
+    </div>
+
+    <h3>Registration — <code>registerBiometric(username)</code></h3>
+    <p>Called from the <strong>Punch page</strong> when the user clicks "Enable Fingerprint".</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-label">Generate cryptographically random challenge and userId</div>
+          <div class="step-code">
+const challenge = crypto.getRandomValues(new Uint8Array(32));
+const userId    = crypto.getRandomValues(new Uint8Array(16));
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-label">Call navigator.credentials.create()</div>
+          <div class="step-desc">
+            Browser invokes the platform authenticator. The user is prompted for their
+            biometric (fingerprint/Face ID). The authenticator creates a new asymmetric key pair,
+            stores the private key internally (on-device, never exported), and returns a
+            <code>PublicKeyCredential</code> containing the public key and credential ID.
+          </div>
+          <div class="step-code">
+const credential = await navigator.credentials.create({
+  publicKey: {
+    challenge,
+    rp: { name: 'R&amp;D Attendance System', id: window.location.hostname },
+    user: { id: userId, name: username, displayName: username },
+    pubKeyCredParams: [
+      { alg: -7,   type: 'public-key' },  // ES256 (ECDSA P-256)
+      { alg: -257, type: 'public-key' },  // RS256 (RSASSA-PKCS1-v1_5)
+    ],
+    authenticatorSelection: {
+      authenticatorAttachment: 'platform',  // device biometric only
+      userVerification: 'required',         // biometric MUST be verified
+      residentKey: 'preferred',
+    },
+    timeout:     60000,
+    attestation: 'none',  // no attestation needed (R&amp;D mode)
+  },
+});
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-label">Extract and encode the credential raw ID</div>
+          <div class="step-desc">
+            <code>credential.rawId</code> is an <code>ArrayBuffer</code> — a unique identifier
+            for this credential bound to the current origin (<code>rpId = hostname</code>).
+            It is Base64-encoded for storage as a string.
+          </div>
+          <div class="step-code">
+return btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+// Result: e.g. "AQID..." — stored in user.credentialId in IndexedDB
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-label">Save credentialId to IndexedDB + refresh session</div>
+          <div class="step-code">
+await this.auth.updateCredentialId(user.id!, credentialId);
+// db.users.update(userId, { credentialId })
+// then re-reads user from DB and serialises to sessionStorage
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Verification — <code>verifyBiometric(credentialId)</code></h3>
+    <p>Called every time the user punches in or out.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-label">Decode stored credentialId back to ArrayBuffer</div>
+          <div class="step-code">
+const rawId = Uint8Array.from(atob(credentialId), c => c.charCodeAt(0));
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-label">Call navigator.credentials.get() with the credential</div>
+          <div class="step-desc">
+            The browser prompts the user for their biometric. The platform authenticator signs
+            the challenge with the private key (which stays on-device). If the biometric
+            matches, the authenticator returns a <code>PublicKeyCredential</code> assertion.
+          </div>
+          <div class="step-code">
+const assertion = await navigator.credentials.get({
+  publicKey: {
+    challenge,
+    rpId: window.location.hostname,
+    allowCredentials: [{ id: rawId, type: 'public-key', transports: ['internal'] }],
+    userVerification: 'required',
+    timeout: 60000,
+  },
+});
+return !!assertion;  // true = verified, false = cancelled/failed
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-label">Return boolean — caller proceeds or shows error</div>
+          <div class="step-desc">
+            In this R&amp;D prototype, verification is considered successful if
+            <code>navigator.credentials.get()</code> resolves without throwing. Full
+            server-side signature verification (counter, authenticator data) would be needed
+            in a production system.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="warn-box">
+      <strong>R&amp;D scope note:</strong> WebAuthn's full security model requires server-side
+      verification of the assertion signature using the stored public key. In this frontend-only
+      prototype, we verify that the OS/browser accepted the biometric and returned a credential
+      object — we do not validate the cryptographic signature. For production, a backend would
+      need to store the public key and verify the <code>authenticatorData</code> + signature.
+    </div>
+  </section>
+
+  <!-- ===== PUNCH FLOW ===== -->
+  <section id="punch" class="section">
+    <div class="section-title">
+      <div class="icon icon-rose">⏱️</div>
+      Punch Flow (Clock In / Clock Out)
+    </div>
+
+    <p>
+      The most complex flow in the app. <code>PunchComponent</code> coordinates four services:
+      <code>LocationService</code>, <code>ZoneService</code>, <code>BiometricService</code>,
+      and <code>AttendanceService</code>.
+    </p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-label">Component initialises — load zones and start GPS watch</div>
+          <div class="step-desc">On <code>ngOnInit</code>, all zones are loaded from Dexie. If the user has <code>zoneIds</code> assigned, the list is filtered to only those. Then <code>watchPosition</code> is started.</div>
+          <div class="step-code">
+const allZones    = await this.zoneService.loadZones();
+const userZoneIds = new Set(this.user()?.zoneIds ?? []);
+this.zones.set(userZoneIds.size > 0
+  ? allZones.filter(z => userZoneIds.has(z.id!))
+  : allZones);
+this.startLocationWatch();
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-label">Continuous GPS updates via watchPosition</div>
+          <div class="step-desc">
+            <code>navigator.geolocation.watchPosition</code> fires on every location update.
+            Each update: stores coordinates in <code>coords</code> signal, then calls
+            <code>updateZoneStatus()</code> to compute the active zone.
+          </div>
+          <div class="step-code">
+this.watchId = this.locationService.watchPosition(
+  coords => {
+    this.coords.set(coords);
+    this.updateZoneStatus(coords);   // recomputes activeZone signal
+  },
+  error => this.locationError.set(error.message),
+);
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-label">Zone membership check on each GPS update</div>
+          <div class="step-desc">
+            <code>updateZoneStatus()</code> iterates all permitted zones and calls
+            <code>haversineDistance()</code> for each. The first zone where
+            <code>distance ≤ radius</code> becomes the <code>activeZone</code>. The
+            <code>nearestZone</code> is always updated for UI display.
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-label">User taps Punch In or Punch Out</div>
+          <div class="step-desc">
+            Button is disabled unless <strong>all three</strong> are true:
+            <code>user</code> is set, <code>coords</code> is non-null, and
+            <code>activeZone</code> is non-null (user is inside a valid zone).
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-label">Biometric verification gate</div>
+          <div class="step-desc">If <code>user.credentialId</code> is absent, an error is shown requiring biometric setup first. Otherwise, <code>verifyBiometric(credentialId)</code> is called — the OS prompts for fingerprint.</div>
+          <div class="step-code">
+if (!user.credentialId) {
+  this.actionError.set('Fingerprint authentication is required. Please enable it first.');
+  return;
+}
+const verified = await this.biometricService.verifyBiometric(user.credentialId);
+if (!verified) { this.actionError.set('Biometric verification failed.'); return; }
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <div class="step-label">Write attendance record to IndexedDB</div>
+          <div class="step-code">
+await this.attendanceService.punchIn(
+  user.id!,
+  coords.latitude,
+  coords.longitude,
+  activeZone.name,   // denormalized snapshot
+);
+// Inserts: { userId, type: 'in', timestamp: new Date(), lat, lng, zoneName }
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-step">
+        <div class="step-num">7</div>
+        <div class="step-content">
+          <div class="step-label">GPS watch cleared on component destroy</div>
+          <div class="step-desc">
+            <code>ngOnDestroy</code> calls <code>locationService.clearWatch(watchId)</code>
+            to stop battery drain when navigating away.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3>Computed Zone Distance Table</h3>
+    <p>
+      The UI shows a live-updating table of all permitted zones with their real-time distances.
+      This is a <code>computed()</code> signal that re-runs whenever <code>coords()</code> or
+      <code>zones()</code> change — no manual subscriptions needed.
+    </p>
+    <pre><code>zoneDistances = <span class="fn">computed</span>(() => {
+  <span class="kw">const</span> c = <span class="kw">this</span>.<span class="fn">coords</span>();
+  <span class="kw">return this</span>.<span class="fn">zones</span>()
+    .<span class="fn">map</span>(z => ({
+      zone:     z,
+      distance: c ? <span class="kw">this</span>.zoneService.<span class="fn">haversineDistance</span>(c.latitude, c.longitude, z.lat, z.lng) : <span class="kw">null</span>,
+      isActive: c ? <span class="kw">this</span>.zoneService.<span class="fn">haversineDistance</span>(c.latitude, c.longitude, z.lat, z.lng) &lt;= z.radius : <span class="kw">false</span>,
+    }))
+    .<span class="fn">sort</span>((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+});</code></pre>
+  </section>
+
+  <!-- ===== LOCATION SERVICE ===== -->
+  <section id="location" class="section">
+    <div class="section-title">
+      <div class="icon icon-teal">🌐</div>
+      Location Service
+    </div>
+
+    <p>
+      <code>LocationService</code> is a thin wrapper around <code>navigator.geolocation</code>
+      that normalises error codes into human-readable messages and returns typed
+      <code>Coordinates</code> objects.
+    </p>
+
+    <table>
+      <thead><tr><th>Method</th><th>API Used</th><th>Returns</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>getCurrentLocation()</code></td>
+          <td><code>geolocation.getCurrentPosition</code></td>
+          <td><code>Promise&lt;Coordinates&gt;</code></td>
+          <td><code>enableHighAccuracy: true</code>, 15 s timeout</td>
+        </tr>
+        <tr>
+          <td><code>watchPosition(onSuccess, onError)</code></td>
+          <td><code>geolocation.watchPosition</code></td>
+          <td><code>watchId: number</code></td>
+          <td><code>maximumAge: 5000</code> — accepts cached position up to 5 s old</td>
+        </tr>
+        <tr>
+          <td><code>clearWatch(watchId)</code></td>
+          <td><code>geolocation.clearWatch</code></td>
+          <td><code>void</code></td>
+          <td>Called in <code>ngOnDestroy</code> of PunchComponent</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ===== ATTENDANCE SERVICE ===== -->
+  <section id="attendance" class="section">
+    <div class="section-title">
+      <div class="icon icon-amber">📋</div>
+      Attendance Records
+    </div>
+
+    <h3>Writing Records</h3>
+    <p>
+      <code>AttendanceService.punchIn()</code> and <code>punchOut()</code> are symmetric — both
+      insert a new row into <code>db.attendance</code> with <code>type: 'in'</code> or
+      <code>type: 'out'</code> respectively. They do <strong>not</strong> check for duplicate
+      punches or enforce business rules like "must punch in before punching out" — this is left
+      to UI-level logic.
+    </p>
+
+    <h3>Reading Records</h3>
+    <pre><code><span class="cmt">// Get all records for a user, sorted newest first</span>
+<span class="kw">async</span> <span class="fn">getHistory</span>(userId: number): Promise&lt;<span class="cls">AttendanceRecord</span>[]&gt; {
+  <span class="kw">const</span> records = <span class="kw">await</span> <span class="kw">this</span>.db.attendance
+    .<span class="fn">where</span>(<span class="str">'userId'</span>).<span class="fn">equals</span>(userId).<span class="fn">toArray</span>();
+  <span class="kw">return</span> records.<span class="fn">sort</span>(
+    (a, b) => <span class="kw">new</span> Date(b.timestamp).<span class="fn">getTime</span>() - <span class="kw">new</span> Date(a.timestamp).<span class="fn">getTime</span>()
+  );
+}
+
+<span class="cmt">// Get the most recent punch record (used to show last action on UI)</span>
+<span class="kw">async</span> <span class="fn">getLastPunch</span>(userId: number): Promise&lt;<span class="cls">AttendanceRecord</span> | undefined&gt; {
+  <span class="kw">const</span> records = <span class="kw">await</span> <span class="kw">this</span>.<span class="fn">getHistory</span>(userId);
+  <span class="kw">return</span> records[<span class="num">0</span>];
+}</code></pre>
+
+    <h3>Export</h3>
+    <p>
+      <code>exportJson(records)</code> serialises an array of attendance records to a formatted
+      JSON string using <code>JSON.stringify(records, null, 2)</code>. The caller is responsible
+      for triggering a browser download (Blob + anchor element).
+    </p>
+  </section>
+
+  <!-- ===== SIGNALS ===== -->
+  <section id="signals" class="section">
+    <div class="section-title">
+      <div class="icon icon-indigo">⚡</div>
+      State Management — Angular Signals
+    </div>
+
+    <p>
+      All local mutable state uses Angular Signals. There are <strong>no Observables,
+      BehaviorSubjects, or NgRx</strong> in the application.
+    </p>
+
+    <table>
+      <thead><tr><th>Pattern</th><th>Usage</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>signal()</code></td>
+          <td>Writable state</td>
+          <td><code>loading = signal(false)</code></td>
+        </tr>
+        <tr>
+          <td><code>.asReadonly()</code></td>
+          <td>Expose state without allowing external mutation</td>
+          <td><code>readonly currentUser = this._currentUser.asReadonly()</code></td>
+        </tr>
+        <tr>
+          <td><code>computed()</code></td>
+          <td>Derived values that auto-update</td>
+          <td><code>zoneDistances = computed(() => ...)</code></td>
+        </tr>
+        <tr>
+          <td><code>.set()</code></td>
+          <td>Replace signal value</td>
+          <td><code>this.loading.set(true)</code></td>
+        </tr>
+        <tr>
+          <td><code>.update()</code></td>
+          <td>Derive new value from current</td>
+          <td><code>selectedZoneIds.update(set => { ... })</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>inject() Pattern — No Constructor Injection</h3>
+    <p>All dependency injection uses <code>inject()</code> in the class body, not constructor parameters:</p>
+    <pre><code><span class="cmt">// ✅ Correct pattern used throughout the codebase</span>
+<span class="kw">export class</span> <span class="cls">EmployeesComponent</span> {
+  <span class="kw">private</span> employeeService = <span class="fn">inject</span>(<span class="cls">EmployeeService</span>);
+  <span class="kw">private</span> zoneService     = <span class="fn">inject</span>(<span class="cls">ZoneService</span>);
+  <span class="kw">private</span> fb              = <span class="fn">inject</span>(<span class="cls">FormBuilder</span>);
+}
+
+<span class="cmt">// ❌ Old pattern — not used</span>
+<span class="kw">constructor</span>(<span class="kw">private</span> employeeService: <span class="cls">EmployeeService</span>) {}</code></pre>
+  </section>
+
+  <!-- ===== PWA ===== -->
+  <section id="pwa" class="section">
+    <div class="section-title">
+      <div class="icon icon-green">📲</div>
+      PWA &amp; Offline Capability
+    </div>
+
+    <p>
+      The app is configured as a PWA via <code>&#64;angular/service-worker</code>.
+      The service worker is managed by Angular's built-in SW infrastructure — no custom
+      service worker is registered manually.
+    </p>
+
+    <div class="card">
+      <div class="card-title">ngsw-config.json — Caching Strategy</div>
+      <ul>
+        <li>All application shell assets (JS, CSS, HTML) are cached on install</li>
+        <li>The app continues to load and function with no network connection</li>
+        <li>All data operations (read/write) are against local IndexedDB — no network needed</li>
+        <li>The <code>manifest.webmanifest</code> enables "Add to Home Screen" / installability</li>
+      </ul>
+    </div>
+
+    <div class="info-box">
+      The PWA service worker only activates in production builds (<code>ng build</code>).
+      During development (<code>ng serve</code>) the SW is not active to allow hot-reload.
+    </div>
+  </section>
+
+  <!-- ===== SECURITY ===== -->
+  <section id="security" class="section">
+    <div class="section-title">
+      <div class="icon icon-red">🔒</div>
+      Security Notes
+    </div>
+
+    <table>
+      <thead><tr><th>Concern</th><th>Implementation</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Password storage</td>
+          <td>SHA-256 hex digest via <code>crypto.subtle</code>. Plaintext never persisted.</td>
+        </tr>
+        <tr>
+          <td>Auth state storage</td>
+          <td><code>sessionStorage</code> only — cleared on tab close. Not <code>localStorage</code>.</td>
+        </tr>
+        <tr>
+          <td>Biometric data</td>
+          <td>Zero biometric data stored by app. OS handles matching; app stores only credential ID (a reference handle).</td>
+        </tr>
+        <tr>
+          <td>WebAuthn origin binding</td>
+          <td><code>rpId = window.location.hostname</code> — credentials are bound to the origin and cannot be replayed cross-origin.</td>
+        </tr>
+        <tr>
+          <td>Challenge randomness</td>
+          <td><code>crypto.getRandomValues(new Uint8Array(32))</code> — cryptographically secure 256-bit challenge per WebAuthn operation.</td>
+        </tr>
+        <tr>
+          <td>Geolocation</td>
+          <td>GPS coordinates are only used for zone membership checks and are persisted as part of the attendance record. No external transmission.</td>
+        </tr>
+        <tr>
+          <td>No server communication</td>
+          <td>There is no network traffic containing user data — no XSS payload exfiltration risk to a server.</td>
+        </tr>
+        <tr>
+          <td>R&amp;D limitations</td>
+          <td>No role-based access control. No WebAuthn server-side signature verification. No IndexedDB encryption. Not production-ready.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="footer">
+    PWA Attendance System — Technical Reference &nbsp;|&nbsp;
+    Generated: April 2026 &nbsp;|&nbsp;
+    Route: <code>/docs</code> &nbsp;|&nbsp;
+    No guard — developer access only
+  </div>
+
+</main>
+</body>
+</html>

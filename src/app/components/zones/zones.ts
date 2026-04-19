@@ -20,6 +20,7 @@ export class ZonesComponent implements OnInit {
   editingZone = signal<Zone | null>(null);
   zoneLoading = signal(false);
   zoneError = signal<string | null>(null);
+  locating = signal(false);
 
   zoneForm = this.fb.group({
     name: ['', [Validators.required]],
@@ -71,6 +72,29 @@ export class ZonesComponent implements OnInit {
     } finally {
       this.zoneLoading.set(false);
     }
+  }
+
+  useCurrentLocation(): void {
+    if (!navigator.geolocation) {
+      this.zoneError.set('Geolocation is not supported by this browser');
+      return;
+    }
+    this.locating.set(true);
+    this.zoneError.set(null);
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        this.zoneForm.patchValue({
+          lat: parseFloat(pos.coords.latitude.toFixed(6)),
+          lng: parseFloat(pos.coords.longitude.toFixed(6)),
+        });
+        this.locating.set(false);
+      },
+      err => {
+        this.zoneError.set('Could not get location: ' + err.message);
+        this.locating.set(false);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
+    );
   }
 
   async deleteZone(id: number): Promise<void> {

@@ -1,0 +1,77 @@
+PWA Attendance System — Implemented Features
+=============================================
+
+AUTH
+  - User registration with username + password
+  - SHA-256 password hashing (Web Crypto API, no plaintext stored)
+  - Password confirmation validation at registration
+  - Case-insensitive duplicate username check
+  - Login with hash comparison
+  - Session persistence via sessionStorage (clears on tab close)
+  - Session restoration on page reload
+  - Logout
+
+ROUTING & GUARDS
+  - Lazy-loaded routes for all pages
+  - authGuard — blocks unauthenticated access, redirects to /login
+  - noAuthGuard — blocks logged-in users from login/register pages
+  - Wildcard redirect to /login
+  - /docs route (no guard, developer access)
+
+EMPLOYEE MANAGEMENT
+  - List all employees (sorted alphabetically)
+  - Create employee with username, password, zone assignments
+  - Edit employee (username, optional password change, zone reassignment)
+  - Delete employee
+  - Zone assignment per employee (multi-select)
+
+ZONE MANAGEMENT
+  - Create geofence zones (name, lat, lng, radius in metres)
+  - Edit zones
+  - Delete zones
+  - Interactive Leaflet map with zone circles
+  - Zone visualisation with radius overlay
+  - "Use Current Location" button auto-fills lat/lng from device GPS
+
+BIOMETRIC (WebAuthn)
+  - Platform authenticator support check (PublicKeyCredential)
+  - Biometric registration using navigator.credentials.create()
+  - ES256 / RS256 key pair generation on-device
+  - Credential ID stored (Base64) in IndexedDB per user
+  - Biometric verification using navigator.credentials.get() before every punch
+  - Cryptographically random 32-byte challenge per operation
+
+PUNCH / ATTENDANCE
+  - Continuous GPS tracking via navigator.geolocation.watchPosition
+  - Real-time Haversine distance calculation to all assigned zones
+  - Zone membership check (distance ≤ radius) on every GPS update
+  - Punch In / Punch Out blocked unless inside a valid zone
+  - Biometric gate required before every punch
+  - Attendance record saved to IndexedDB (userId, type, timestamp, lat, lng, zoneName)
+  - Live zone distance table sorted by proximity
+  - GPS watch cleared on component destroy
+
+DATA STORAGE
+  - IndexedDB via Dexie.js (single database: AttendanceDB)
+  - Table: users (id, username, passwordHash, credentialId, zoneIds)
+  - Table: attendance (id, userId, type, timestamp, lat, lng, zoneName)
+  - Table: zones (id, name, lat, lng, radius)
+  - Versioned schema migrations (v1 → v2) without data loss
+
+ATTENDANCE HISTORY
+  - Per-user history retrieval sorted newest first
+  - Last punch record lookup
+  - JSON export of attendance records
+
+UI / UX
+  - Mobile-first responsive design (Tailwind CSS v4)
+  - Reactive forms with inline validation messages
+  - Loading states and error signals on all async operations
+  - Navigation shell with active route highlighting
+  - Touch-friendly targets (min 44px)
+
+PWA
+  - Service worker via @angular/service-worker
+  - Asset caching for full offline capability
+  - Web App Manifest (installable / Add to Home Screen)
+  - App functional with zero network connection

@@ -19,4 +19,8 @@ export class NavShellComponent {
     this.auth.logout();
     this.router.navigate(['/login']);
   }
+
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
 }

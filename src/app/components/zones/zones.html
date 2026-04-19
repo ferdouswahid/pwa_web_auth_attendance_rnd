@@ -65,16 +65,35 @@
                 class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent" />
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Latitude</label>
-                <input formControlName="lat" type="number" step="any" placeholder="23.0216"
-                  class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent" />
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-xs font-medium text-gray-600">Latitude &amp; Longitude</label>
+                <button type="button" (click)="useCurrentLocation()" [disabled]="locating()"
+                  class="flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800 disabled:text-indigo-300 transition-colors">
+                  @if (locating()) {
+                    <svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Locating…
+                  } @else {
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0-6v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+                    </svg>
+                    Use Current Location
+                  }
+                </button>
               </div>
-              <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Longitude</label>
-                <input formControlName="lng" type="number" step="any" placeholder="91.4008"
-                  class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent" />
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <input formControlName="lat" type="number" step="any" placeholder="Latitude"
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent" />
+                </div>
+                <div>
+                  <input formControlName="lng" type="number" step="any" placeholder="Longitude"
+                    class="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-transparent" />
+                </div>
               </div>
             </div>
 

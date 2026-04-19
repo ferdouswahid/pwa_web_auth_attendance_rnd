@@ -34,5 +34,14 @@ export const routes: Routes = [
     loadComponent: () => import('./components/punch/punch').then(m => m.PunchComponent),
     canActivate: [authGuard],
   },
+  {
+    path: 'profile',
+    loadComponent: () => import('./components/profile/profile').then(m => m.ProfileComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'docs',
+    loadComponent: () => import('./components/docs/docs').then(m => m.DocsComponent),
+  },
   { path: '**', redirectTo: '/login' },
 ];
