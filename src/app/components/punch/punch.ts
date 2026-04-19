@@ -1,5 +1,4 @@
 import { Component, signal, inject, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { BiometricService } from '../../services/biometric.service';
@@ -8,11 +7,12 @@ import { ZoneService } from '../../services/zone.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { Zone } from '../../models/zone.model';
 import { MapComponent } from '../map/map';
+import { NavShellComponent } from '../nav-shell/nav-shell';
 
 @Component({
   selector: 'app-punch',
   standalone: true,
-  imports: [MapComponent, DecimalPipe],
+  imports: [MapComponent, DecimalPipe, NavShellComponent],
   templateUrl: './punch.html',
 })
 export class PunchComponent implements OnInit, OnDestroy {
@@ -21,7 +21,6 @@ export class PunchComponent implements OnInit, OnDestroy {
   private locationService = inject(LocationService);
   private zoneService = inject(ZoneService);
   private attendanceService = inject(AttendanceService);
-  private router = inject(Router);
 
   user = this.auth.currentUser;
 
@@ -154,7 +153,4 @@ export class PunchComponent implements OnInit, OnDestroy {
     }
   }
 
-  goToDashboard(): void {
-    this.router.navigate(['/dashboard']);
-  }
 }

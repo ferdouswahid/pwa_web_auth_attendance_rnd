@@ -1,98 +1,60 @@
 import { Component, signal, inject, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { AttendanceService } from '../../services/attendance.service';
 import { ZoneService } from '../../services/zone.service';
 import { AttendanceRecord } from '../../models/attendance.model';
 import { Zone } from '../../models/zone.model';
+import { NavShellComponent } from '../nav-shell/nav-shell';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, DatePipe, DecimalPipe, ReactiveFormsModule],
+  imports: [RouterLink, DatePipe, DecimalPipe, NavShellComponent],
   templateUrl: './dashboard.html',
 })
 export class DashboardComponent implements OnInit {
   private auth = inject(AuthService);
   private attendanceService = inject(AttendanceService);
   private zoneService = inject(ZoneService);
-  private router = inject(Router);
-  private fb = inject(FormBuilder);
 
   user = this.auth.currentUser;
 
-  // Attendance
   history = signal<AttendanceRecord[]>([]);
   lastPunch = signal<AttendanceRecord | undefined>(undefined);
   historyLoading = signal(true);
-
-  // Zones
-  zones = signal<Zone[]>([]);
-  showZoneForm = signal(false);
-  zoneLoading = signal(false);
-  zoneError = signal<string | null>(null);
-
-  zoneForm = this.fb.group({
-    name: ['', [Validators.required]],
-    lat: [null as number | null, [Validators.required, Validators.min(-90), Validators.max(90)]],
-    lng: [null as number | null, [Validators.required, Validators.min(-180), Validators.max(180)]],
-    radius: [200, [Validators.required, Validators.min(10), Validators.max(50000)]],
-  });
+  zoneCount = signal(0);
+  assignedZones = signal<Zone[]>([]);
+  todayPunchIn = signal<AttendanceRecord | undefined>(undefined);
+  todayPunchOut = signal<AttendanceRecord | undefined>(undefined);
 
   async ngOnInit(): Promise<void> {
     const user = this.user();
     if (!user?.id) return;
-    const [records] = await Promise.all([
+    const [records, zones] = await Promise.all([
       this.attendanceService.getHistory(user.id),
-      this.refreshZones(),
+      this.zoneService.loadZones(),
     ]);
     this.history.set(records.slice(0, 15));
     this.lastPunch.set(records[0]);
+    this.zoneCount.set(zones.length);
+    const userZoneIds = new Set(user.zoneIds ?? []);
+    this.assignedZones.set(zones.filter(z => z.id !== undefined && userZoneIds.has(z.id)));
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date(); todayEnd.setHours(23, 59, 59, 999);
+    const todayRecords = records.filter(r => {
+      const t = new Date(r.timestamp);
+      return t >= todayStart && t <= todayEnd;
+    });
+    const inRecords = todayRecords.filter(r => r.type === 'in');
+    const outRecords = todayRecords.filter(r => r.type === 'out');
+    this.todayPunchIn.set(inRecords.at(-1));
+    this.todayPunchOut.set(outRecords[0]);
     this.historyLoading.set(false);
   }
 
-  // ── Zone management ────────────────────────────────────────────────────────
-
-  async refreshZones(): Promise<void> {
-    this.zones.set(await this.zoneService.loadZones());
-  }
-
-  toggleZoneForm(): void {
-    this.showZoneForm.update(v => !v);
-    this.zoneError.set(null);
-    this.zoneForm.reset({ radius: 200 });
-  }
-
-  async submitZone(): Promise<void> {
-    if (this.zoneForm.invalid || this.zoneLoading()) return;
-    this.zoneError.set(null);
-    this.zoneLoading.set(true);
-    try {
-      const { name, lat, lng, radius } = this.zoneForm.value;
-      await this.zoneService.addZone({ name: name!, lat: lat!, lng: lng!, radius: radius! });
-      this.zoneForm.reset({ radius: 200 });
-      this.showZoneForm.set(false);
-      await this.refreshZones();
-    } catch (err) {
-      this.zoneError.set(err instanceof Error ? err.message : 'Failed to save zone');
-    } finally {
-      this.zoneLoading.set(false);
-    }
-  }
-
-  async deleteZone(id: number): Promise<void> {
-    await this.zoneService.deleteZone(id);
-    await this.refreshZones();
-  }
-
   // ── Attendance ─────────────────────────────────────────────────────────────
-
-  logout(): void {
-    this.auth.logout();
-    this.router.navigate(['/login']);
-  }
 
   async exportData(): Promise<void> {
     const user = this.user();

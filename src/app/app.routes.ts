@@ -20,6 +20,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'zones',
+    loadComponent: () => import('./components/zones/zones').then(m => m.ZonesComponent),
+    canActivate: [authGuard],
+  },
+  {
+    path: 'employees',
+    loadComponent: () => import('./components/employees/employees').then(m => m.EmployeesComponent),
+    canActivate: [authGuard],
+  },
+  {
     path: 'punch',
     loadComponent: () => import('./components/punch/punch').then(m => m.PunchComponent),
     canActivate: [authGuard],

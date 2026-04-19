@@ -1,17 +1,4 @@
-<div class="min-h-screen bg-gray-50 flex flex-col">
-
-  <!-- Header -->
-  <header class="bg-white shadow-sm z-10">
-    <div class="px-4 py-4 flex items-center justify-between">
-      <button (click)="goToDashboard()" class="flex items-center gap-1.5 text-gray-600 hover:text-indigo-600 transition-colors text-sm font-medium">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <h1 class="font-bold text-gray-800">Punch Attendance</h1>
-      <div class="w-24"></div>
-    </div>
-  </header>
+<app-nav-shell title="Punch Attendance">
 
   <!-- Map -->
   <div class="h-60 relative">
@@ -88,7 +75,7 @@
               <p class="font-semibold text-red-800 text-sm">Outside Zone</p>
               @if (nearestZone()) {
                 <p class="text-red-600 text-xs truncate">
-                  Nearest: {{ nearestZone()?.zone?.name }} — {{ nearestZone()?.distance | number:'1.0-0' }}m away
+                  Nearest: {{ nearestZone()?.zone?.name }} - {{ nearestZone()?.distance | number:'1.0-0' }}m away
                 </p>
               }
             </div>
@@ -209,4 +196,5 @@
     </div>
 
   </div>
-</div>
+
+</app-nav-shell>
