@@ -152,4 +152,11 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.map.fitBounds(bounds, { padding: [40, 40], animate: false });
     }
   }
+
+  // ── Public: pan map to a specific zone ──────────────────────────────────────
+
+  flyToZone(lat: number, lng: number): void {
+    if (!this.map) return;
+    this.map.flyTo([lat, lng], 16, { animate: true, duration: 0.8 });
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { BiometricService } from '../../services/biometric.service';
@@ -51,6 +51,8 @@ export class PunchComponent implements OnInit, OnDestroy {
 
   biometricSupported = this.biometricService.isSupported();
 
+  @ViewChild(MapComponent) private mapRef?: MapComponent;
+
   private watchId?: number;
 
   async ngOnInit(): Promise<void> {
@@ -97,6 +99,10 @@ export class PunchComponent implements OnInit, OnDestroy {
       ) ?? null;
     this.activeZone.set(active);
     this.nearestZone.set(this.zoneService.getNearestZone(coords.latitude, coords.longitude, zones));
+  }
+
+  focusZone(zone: Zone): void {
+    this.mapRef?.flyToZone(zone.lat, zone.lng);
   }
 
   async enableBiometric(): Promise<void> {

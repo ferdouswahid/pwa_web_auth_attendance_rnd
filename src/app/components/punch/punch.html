@@ -64,8 +64,10 @@
         } @else {
           <div class="divide-y divide-gray-50">
             @for (item of zoneDistances(); track item.zone.id) {
-              <div class="px-4 py-3 flex items-center gap-3"
-                [class.bg-green-50]="item.isActive">
+              <div class="px-4 py-3 flex items-center gap-3 cursor-pointer active:bg-gray-100"
+                [class.bg-green-50]="item.isActive"
+                (click)="focusZone(item.zone)"
+                title="Pan map to {{ item.zone.name }}">
                 <!-- Status dot -->
                 @if (item.isActive) {
                   <div class="relative flex-shrink-0">
