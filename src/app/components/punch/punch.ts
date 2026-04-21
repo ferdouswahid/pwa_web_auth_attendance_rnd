@@ -50,6 +50,17 @@ export class PunchComponent implements OnInit, OnDestroy {
   loadingState = signal<'location' | 'biometric' | 'punch' | null>(null);
 
   biometricSupported = this.biometricService.isSupported();
+  private browserRegistration = signal<{ userId: number } | null>(null);
+
+  readonly browserLockedToOther = computed(() => {
+    const reg = this.browserRegistration();
+    return reg !== null && reg.userId !== this.user()?.id;
+  });
+
+  readonly browserRegisteredForMe = computed(() => {
+    const reg = this.browserRegistration();
+    return reg !== null && reg.userId === this.user()?.id;
+  });
 
   @ViewChild(MapComponent) private mapRef?: MapComponent;
 
@@ -64,6 +75,7 @@ export class PunchComponent implements OnInit, OnDestroy {
         ? allZones.filter(z => z.id !== undefined && userZoneIds.has(z.id))
         : allZones,
     );
+    this.browserRegistration.set(await this.biometricService.getBrowserRegistration());
     this.startLocationWatch();
   }
 
@@ -108,12 +120,26 @@ export class PunchComponent implements OnInit, OnDestroy {
   async enableBiometric(): Promise<void> {
     const user = this.user();
     if (!user) return;
+
+    const existing = await this.biometricService.getBrowserRegistration();
+    if (existing) {
+      this.browserRegistration.set(existing);
+      this.actionError.set(
+        existing.userId === user.id
+          ? 'A fingerprint is already registered from this browser for your account.'
+          : 'This browser is already registered to another account.',
+      );
+      return;
+    }
+
     this.loadingState.set('biometric');
     this.actionError.set(null);
     this.actionMessage.set(null);
     try {
       const reg = await this.biometricService.registerBiometric(user.username);
       await this.auth.updateCredentialId(user.id!, reg);
+      await this.biometricService.saveBrowserRegistration(user.id!);
+      this.browserRegistration.set({ userId: user.id! });
       this.actionMessage.set('Fingerprint registered successfully!');
     } catch (err) {
       this.actionError.set(

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
+import { DbService } from './db.service';
 
 export interface BiometricRegistration {
   credentialId: string;          // base64
@@ -15,10 +16,39 @@ export interface BiometricVerification {
   lastSignature: string;      // base64
 }
 
+const BROWSER_ID_KEY = 'attendance_browser_id';
+
 @Injectable({ providedIn: 'root' })
 export class BiometricService {
+  private db = inject(DbService);
+
   isSupported(): boolean {
     return typeof window !== 'undefined' && !!window.PublicKeyCredential;
+  }
+
+  getBrowserId(): string {
+    let id = localStorage.getItem(BROWSER_ID_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(BROWSER_ID_KEY, id);
+    }
+    return id;
+  }
+
+  async getBrowserRegistration(): Promise<{ userId: number } | null> {
+    const browserId = this.getBrowserId();
+    const existing = await this.db.browserRegistrations
+      .where('browserId').equals(browserId)
+      .first();
+    return existing ? { userId: existing.userId } : null;
+  }
+
+  async saveBrowserRegistration(userId: number): Promise<void> {
+    await this.db.browserRegistrations.add({
+      browserId: this.getBrowserId(),
+      userId,
+      registeredAt: Date.now(),
+    });
   }
 
   async registerBiometric(username: string): Promise<BiometricRegistration> {
