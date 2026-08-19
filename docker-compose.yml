@@ -1,0 +1,7 @@
+services:
+  attendance:
+    build: .
+    container_name: attendance-app
+    restart: unless-stopped
+    ports:
+      - "8081:80"
